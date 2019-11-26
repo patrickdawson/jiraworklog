@@ -1,6 +1,9 @@
 const inquirer = require("inquirer");
 const moment = require("moment");
 const rest = require("superagent");
+const config = require("./config");
+
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 const dateNow = moment().toISOString();
 const datePast = moment().subtract(1, "days").toISOString();
@@ -12,16 +15,16 @@ const addWorklog = async () => {
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
             choices: [
-                { name: "Sonstiges", value: "TXR-1" },
-                { name: "Daily", value: "TXR-2" },
-                { name: "Iterationsabschluss", value: "TXR-3" },
-                "TXR-",
+                { name: "Sonstiges", value: config.sonstiges },
+                { name: "Daily", value: config.daily },
+                { name: "Iterationsabschluss", value: config.iterationsabschluss },
+                "custom",
             ],
         },
         {
             type: "input",
             name: "issue",
-            when: answers => answers.issueSelection === "TXR-",
+            when: answers => answers.issueSelection === "custom",
             filter: value => `TXR-${value}`,
         },
         {
@@ -36,11 +39,22 @@ const addWorklog = async () => {
         }
     ]);
 
-    // const { body } = await rest.post(`${url}`);
-    // console.log(JSON.stringify(body));
+    answers.date = answers.bookYesterday ? datePast : dateNow;
+    let issue = answers.issueSelection !== "custom" ? answers.issueSelection : answers.issue;
 
-    answers.date = answers.bookYesterday ? datePast : dateNow
-    console.log(JSON.stringify(answers));
+    const postData = {
+        timeSpent: answers.time,
+        started: answers.date.replace("Z", "+0000"),
+    };
+
+    console.log(postData);
+
+    try {
+        await rest.post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
+            .auth(config.user, process.env["JIRA_PASS"]);
+    } catch (err) {
+        console.log(`Failed to add worklog: Reason: ${err.message}`);
+    }
 
     answers = await inquirer.prompt([{
         type: "confirm",
