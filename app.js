@@ -8,7 +8,25 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const dateNow = moment().toISOString();
 const datePast = moment().subtract(1, "days").toISOString();
 
-const addWorklog = async () => {
+const getCredentials = async () => {
+    const answers = inquirer.prompt([{
+        type: "input",
+        name: "user",
+        message: "Für welchen Benutzer möchtest du buchen",
+        when: () => !config.user,
+    }, {
+        type: "password",
+        name: "password",
+        message: answers => `Passwort für den Benutzer ${answers.user || config.user}`,
+        when: () => !process.env["JIRA_PASS"],
+    }]);
+    return {
+        user: config.user || answers.user,
+        password: process.env["JIRA_PASS"] || answers.password,
+    };
+}
+
+const addWorklog = async (credentials) => {
     let answers = await inquirer.prompt([
         {
             type: "list",
@@ -36,7 +54,7 @@ const addWorklog = async () => {
             type: "confirm",
             name: "bookYesterday",
             message: "Soll die Buchung auf den gestrigen Tag?",
-        }
+        },
     ]);
 
     answers.date = answers.bookYesterday ? datePast : dateNow;
@@ -51,7 +69,7 @@ const addWorklog = async () => {
 
     try {
         await rest.post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
-            .auth(config.user, process.env["JIRA_PASS"]);
+            .auth(credentials.user, credentials.password);
     } catch (err) {
         console.log(`Failed to add worklog: Reason: ${err.message}`);
     }
@@ -63,10 +81,11 @@ const addWorklog = async () => {
     }]);
 
     if (answers.continue) {
-        await addWorklog();
+        await addWorklog(credentials);
     }
 };
 
 (async () => {
-    await addWorklog();
+    const credentials = await getCredentials();
+    await addWorklog(credentials);
 })();
