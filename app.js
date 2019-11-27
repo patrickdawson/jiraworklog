@@ -8,25 +8,26 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const dateNow = moment().toISOString();
 const datePast = moment().subtract(1, "days").toISOString();
 
-const getCredentials = async () => {
-    const answers = inquirer.prompt([{
+const getCredentials = async (defaults = {}) => {
+    const answers = await inquirer.prompt([{
         type: "input",
         name: "user",
         message: "Für welchen Benutzer möchtest du buchen",
-        when: () => !config.user,
+        when: () => !defaults.user,
     }, {
         type: "password",
         name: "password",
-        message: answers => `Passwort für den Benutzer ${answers.user || config.user}`,
-        when: () => !process.env["JIRA_PASS"],
+        message: answers => `Passwort für den Benutzer ${answers.user || defaults.user}`,
+        when: () => !defaults.password,
     }]);
     return {
-        user: config.user || answers.user,
-        password: process.env["JIRA_PASS"] || answers.password,
+        user: defaults.user || answers.user,
+        password: defaults.password || answers.password,
     };
 }
 
 const addWorklog = async (credentials) => {
+    let localCredentials = credentials;
     let answers = await inquirer.prompt([
         {
             type: "list",
@@ -69,9 +70,14 @@ const addWorklog = async (credentials) => {
 
     try {
         await rest.post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
-            .auth(credentials.user, credentials.password);
+            .auth(localCredentials.user, localCredentials.password);
     } catch (err) {
-        console.log(`Failed to add worklog: Reason: ${err.message}`);
+        if (err.statusCode === 401) { // Unauthorized
+            console.log("Wrong username/password given.");
+            localCredentials = await getCredentials(); // no defaults. User has to type in user and password
+        } else {
+            console.log(`Failed to add worklog: Reason: ${err.message}`);
+        }
     }
 
     answers = await inquirer.prompt([{
@@ -81,11 +87,11 @@ const addWorklog = async (credentials) => {
     }]);
 
     if (answers.continue) {
-        await addWorklog(credentials);
+        await addWorklog(localCredentials);
     }
 };
 
 (async () => {
-    const credentials = await getCredentials();
+    const credentials = await getCredentials({ user: config.user, password: process.env["JIRA_PASS"] });
     await addWorklog(credentials);
 })();
