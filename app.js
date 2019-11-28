@@ -34,10 +34,12 @@ const addWorklog = async (credentials) => {
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
             choices: [
-                { name: "Sonstiges", value: config.sonstiges },
-                { name: "Daily", value: config.daily },
-                { name: "Iterationsabschluss", value: config.iterationsabschluss },
                 "custom",
+                { name: "Daily", value: config.daily },
+                { name: "Sonstiges", value: config.sonstiges },
+                { name: "Grooming", value: config.grooming },
+                { name: "Iterationsabschluss", value: config.iterationsabschluss },
+                { name: "Sonderbesprechung", value: config.sonderbesprechung },
             ],
         },
         {
