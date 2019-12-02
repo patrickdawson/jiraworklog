@@ -5,8 +5,18 @@ const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
+/**
+ * Calculates date past. Reason: If you book on monday for the previous day you want the booking to happen on friday.
+ */
+const calculateDatePast = () => {
+    const weekDay = moment().weekday();
+    const subtractDays = weekDay === 1 ? 3 : 1;
+    return moment().subtract(subtractDays, "days").toISOString();
+};
+
 const dateNow = moment().toISOString();
-const datePast = moment().subtract(1, "days").toISOString();
+const datePast = calculateDatePast();
+
 
 const getCredentials = async (defaults = {}) => {
     const answers = await inquirer.prompt([{
@@ -24,7 +34,7 @@ const getCredentials = async (defaults = {}) => {
         user: defaults.user || answers.user,
         password: defaults.password || answers.password,
     };
-}
+};
 
 const addWorklog = async (credentials) => {
     let localCredentials = credentials;
