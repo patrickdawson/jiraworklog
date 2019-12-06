@@ -8,5 +8,6 @@
         { "name": "Sonderbesprechung", "value": "TXR-10463" },
         { "name": "Support Unternehmensbereiche", "value": "TXR-10481" },
         { "name": "Bamboo Fehlerbehebungen", "value": "TXR-10770" }
-    ]
+    ],
+    "maxLastIssues": 3
 }

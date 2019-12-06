@@ -1,9 +1,12 @@
 const inquirer = require("inquirer");
 const moment = require("moment");
 const rest = require("superagent");
+const Conf = require('conf');
+
 const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+const configstore = new Conf();
 
 /**
  * Calculates date past. Reason: If you book on monday for the previous day you want the booking to happen on friday.
@@ -17,7 +20,11 @@ const calculateDatePast = () => {
 const dateNow = moment().toISOString();
 const datePast = calculateDatePast();
 
-
+/**
+ * Resolves with user and password configuration
+ * @param {Object} defaults - The default user and password
+ * @returns {Promise} Resolves with user and password
+ */
 const getCredentials = async (defaults = {}) => {
     const answers = await inquirer.prompt([{
         type: "input",
@@ -36,6 +43,32 @@ const getCredentials = async (defaults = {}) => {
     };
 };
 
+/**
+ * Returns the last issues.
+ * @returns {string[]} Returns the last issues.
+ */
+const getLastIssues = () => (configstore.get("lastIssues") || []);
+/**
+ * Adds given issue to lastIssues cache.
+ * @param {string} issue - The issue to add
+ */
+const addToLastIssues = (issue) => {
+    let lastIssues = getLastIssues();
+    // remove entry if it is already existing
+    const idx = lastIssues.findIndex(v => v === issue);
+    if (idx >= 0) {
+        lastIssues.splice(idx, 1);
+    }
+    // add issue as first element in list
+    lastIssues.unshift(issue);
+    // trim list to maxLastIssues
+    if (lastIssues.length > config.maxLastIssues) {
+        lastIssues.splice(config.maxLastIssues);
+    }
+    // save lastIssues
+    configstore.set("lastIssues", lastIssues.filter(v => !!v));
+};
+
 const addWorklog = async (credentials) => {
     let localCredentials = credentials;
     let answers = await inquirer.prompt([
@@ -44,6 +77,7 @@ const addWorklog = async (credentials) => {
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
             choices: [
+                ...getLastIssues(),
                 "custom",
                 ...config.issues,
             ],
@@ -66,15 +100,19 @@ const addWorklog = async (credentials) => {
         },
     ]);
 
-    answers.date = answers.bookYesterday ? datePast : dateNow;
-    let issue = answers.issueSelection !== "custom" ? answers.issueSelection : answers.issue;
+    let issue = answers.issueSelection;
+    if (answers.issueSelection === "custom") {
+        addToLastIssues(answers.issue);
+        issue = answers.issue;
+    }
 
+    const dateToBook = answers.bookYesterday ? datePast : dateNow;
     const postData = {
         timeSpent: answers.time,
-        started: answers.date.replace("Z", "+0000"),
+        started: dateToBook.replace("Z", "+0000"),
     };
 
-    console.log(postData);
+    console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
 
     try {
         await rest.post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
@@ -100,6 +138,10 @@ const addWorklog = async (credentials) => {
 };
 
 (async () => {
-    const credentials = await getCredentials({ user: config.user, password: process.env["JIRA_PASS"] });
-    await addWorklog(credentials);
+    try {
+        const credentials = await getCredentials({ user: config.user, password: process.env["JIRA_PASS"] });
+        await addWorklog(credentials);
+    } catch (error) {
+        console.error(error);
+    }
 })();
