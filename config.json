@@ -1,8 +1,12 @@
 {
     "user": "",
-    "sonstiges": "TXR-10482",
-    "daily": "TXR-10768",
-    "iterationsabschluss": "TXR-11483",
-    "sonderbesprechung": "TXR-10463",
-    "grooming": "TXR-10769"
+    "issues": [
+        { "name": "Daily", "value": "TXR-10768" },
+        { "name": "Sonstiges", "value": "TXR-10482" },
+        { "name": "Grooming", "value": "TXR-10769" },
+        { "name": "Iterationsabschluss/Iterationsplanung", "value": "TXR-11483" },
+        { "name": "Sonderbesprechung", "value": "TXR-10463" },
+        { "name": "Support Unternehmensbereiche", "value": "TXR-10481" },
+        { "name": "Bamboo Fehlerbehebungen", "value": "TXR-10770" }
+    ]
 }

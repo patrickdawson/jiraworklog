@@ -45,18 +45,14 @@ const addWorklog = async (credentials) => {
             message: "Welchen Issue willst du buchen",
             choices: [
                 "custom",
-                { name: "Daily", value: config.daily },
-                { name: "Sonstiges", value: config.sonstiges },
-                { name: "Grooming", value: config.grooming },
-                { name: "Iterationsabschluss", value: config.iterationsabschluss },
-                { name: "Sonderbesprechung", value: config.sonderbesprechung },
+                ...config.issues,
             ],
         },
         {
             type: "input",
             name: "issue",
             when: answers => answers.issueSelection === "custom",
-            filter: value => `TXR-${value}`,
+            filter: value => (/^[0-9].*/.test(value) ? `TXR-${value}` : value),
         },
         {
             type: "input",
