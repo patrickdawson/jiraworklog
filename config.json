@@ -1,5 +1,4 @@
 {
-    "user": "",
     "issues": [
         { "name": "Daily", "value": "TXR-10768" },
         { "name": "Sonstiges", "value": "TXR-10482" },
@@ -7,7 +6,8 @@
         { "name": "Iterationsabschluss/Iterationsplanung", "value": "TXR-11483" },
         { "name": "Sonderbesprechung", "value": "TXR-10463" },
         { "name": "Support Unternehmensbereiche", "value": "TXR-10481" },
-        { "name": "Bamboo Fehlerbehebungen", "value": "TXR-10770" }
+        { "name": "Bamboo Fehlerbehebungen", "value": "TXR-10770" },
+        { "name": "Schulungen", "value": "TXR-10459" }
     ],
     "maxLastIssues": 3
 }

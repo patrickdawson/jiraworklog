@@ -30,15 +30,16 @@ const getCredentials = async (defaults = {}) => {
         type: "input",
         name: "user",
         message: "Für welchen Benutzer möchtest du buchen",
-        when: () => !defaults.user,
+        default: () => configstore.get("user"),
     }, {
         type: "password",
         name: "password",
         message: answers => `Passwort für den Benutzer ${answers.user || defaults.user}`,
         when: () => !defaults.password,
     }]);
+    configstore.set("user", answers.user);
     return {
-        user: defaults.user || answers.user,
+        user: answers.user,
         password: defaults.password || answers.password,
     };
 };
@@ -139,7 +140,7 @@ const addWorklog = async (credentials) => {
 
 (async () => {
     try {
-        const credentials = await getCredentials({ user: config.user, password: process.env["JIRA_PASS"] });
+        const credentials = await getCredentials({ password: process.env["JIRA_PASS"] });
         await addWorklog(credentials);
     } catch (error) {
         console.error(error);
