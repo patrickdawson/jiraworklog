@@ -1,13 +1,13 @@
 {
     "issues": [
-        { "name": "Daily", "value": "TXR-10768" },
-        { "name": "Sonstiges", "value": "TXR-10482" },
-        { "name": "Grooming", "value": "TXR-10769" },
-        { "name": "Iterationsabschluss/Iterationsplanung", "value": "TXR-11483" },
-        { "name": "Sonderbesprechung", "value": "TXR-10463" },
-        { "name": "Support Unternehmensbereiche", "value": "TXR-10481" },
-        { "name": "Bamboo Fehlerbehebungen", "value": "TXR-10770" },
-        { "name": "Schulungen", "value": "TXR-10459" }
+        { "name": "Daily", "value": "TXR-13113" },
+        { "name": "Sonstiges", "value": "TXR-13128" },
+        { "name": "Grooming", "value": "TXR-13114" },
+        { "name": "Iterationsabschluss/Iterationsplanung", "value": "TXR-13115" },
+        { "name": "Sonderbesprechung", "value": "TXR-13124" },
+        { "name": "Support Unternehmensbereiche", "value": "TXR-13126" },
+        { "name": "Bamboo Fehlerbehebungen", "value": "TXR-13127" },
+        { "name": "Schulungen", "value": "TXR-13120" }
     ],
     "maxLastIssues": 3
 }
