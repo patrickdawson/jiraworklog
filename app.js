@@ -7,17 +7,18 @@ const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const configstore = new Conf();
+moment.locale('de');
 
 /**
  * Calculates date past. Reason: If you book on monday for the previous day you want the booking to happen on friday.
  */
 const calculateDatePast = () => {
     const weekDay = moment().weekday();
-    const subtractDays = weekDay === 1 ? 3 : 1;
-    return moment().subtract(subtractDays, "days").toISOString();
+    const subtractDays = weekDay === 0 ? 3 : 1;
+    return moment().subtract(subtractDays, "days");
 };
 
-const dateNow = moment().toISOString();
+const dateNow = moment();
 const datePast = calculateDatePast();
 
 /**
@@ -110,7 +111,7 @@ const addWorklog = async (credentials) => {
     const dateToBook = answers.bookYesterday ? datePast : dateNow;
     const postData = {
         timeSpent: answers.time,
-        started: dateToBook.replace("Z", "+0000"),
+        started: dateToBook.toISOString().replace("Z", "+0000"),
     };
 
     console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
@@ -140,6 +141,7 @@ const addWorklog = async (credentials) => {
 
 (async () => {
     try {
+        console.log(`\nWilkommen beim JIRA worklog tool.\nBuchen auf "gestern" bezieht sich auf den "${datePast.format('dddd[,] LL')}".`);
         const credentials = await getCredentials({ password: process.env["JIRA_PASS"] });
         await addWorklog(credentials);
     } catch (error) {

@@ -13,7 +13,11 @@
     "conf": "6.2.0",
     "inquirer": "7.0.0",
     "moment": "2.24.0",
-    "rxjs": "6.5.3",
     "superagent": "5.1.0"
+  },
+  "devDependencies": {
+    "inquirer-test": "2.0.1",
+    "jest": "25.1.0",
+    "nock": "11.7.2"
   }
 }
