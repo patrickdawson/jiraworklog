@@ -9,5 +9,5 @@
         { "name": "Bamboo Fehlerbehebungen", "value": "TXR-13127" },
         { "name": "Schulungen", "value": "TXR-13120" }
     ],
-    "maxLastIssues": 3
+    "maxLastIssues": 5
 }
