@@ -96,6 +96,11 @@ const addWorklog = async (credentials) => {
             message: "Wieviel Zeit willst du buchen",
         },
         {
+            type: "input",
+            name: "message",
+            message: "Buchungstext (optional)",
+        },
+        {
             type: "confirm",
             name: "bookYesterday",
             message: "Soll die Buchung auf den gestrigen Tag?",
@@ -112,6 +117,7 @@ const addWorklog = async (credentials) => {
     const postData = {
         timeSpent: answers.time,
         started: dateToBook.toISOString().replace("Z", "+0000"),
+        comment: answers.message,
     };
 
     console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
