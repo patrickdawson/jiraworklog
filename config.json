@@ -7,7 +7,12 @@
         { "name": "Sonderbesprechung", "value": "TXR-13124" },
         { "name": "Support Unternehmensbereiche", "value": "TXR-13126" },
         { "name": "Bamboo Fehlerbehebungen", "value": "TXR-13127" },
-        { "name": "Schulungen", "value": "TXR-13120" }
+        { "name": "Schulungen", "value": "TXR-13120" },
+        { "name": "Bugs", "value": "TXR-2833" },
+        { "name": "Architektur", "value": "TXR-13116" },
+        { "name": "Lieferantenmgt", "value": "TXR-13130" },
+        { "name": "DVV", "value": "TXR-13125" },
+        { "name": "Studenten", "value": "TXR-13123" }
     ],
     "maxLastIssues": 5
 }
