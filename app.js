@@ -1,13 +1,41 @@
+const _ = require("lodash");
 const inquirer = require("inquirer");
 const moment = require("moment");
 const rest = require("superagent");
 const Conf = require("conf");
+const fuzzy = require("fuzzy");
 
 const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const configstore = new Conf();
 moment.locale("de");
+
+inquirer.registerPrompt("autocomplete", require("inquirer-autocomplete-prompt"));
+
+/**
+ * Returns the last issues.
+ * @returns {string[]} Returns the last issues.
+ */
+const getLastIssues = () => configstore.get("lastIssues") || [];
+
+/**
+ * Get all issues including the last issues
+ * @return {string[]} All issue names as string array
+ */
+const getAllIssues = () => [...getLastIssues(), "custom", ..._.map(config.issues, i => i.name)];
+
+/**
+ * Search function for inquirer autocomplete prompt.
+ * @param {Object} answersSoFar - Not used.
+ * @param {string} input - User input.
+ * @return {Promise<Array>}
+ */
+const searchKnownIssues = async (answersSoFar, input) => {
+    input = input || "";
+    let fuzzyResult = fuzzy.filter(input, getAllIssues());
+    return _.map(fuzzyResult, result => result.original);
+};
 
 /**
  * Calculates date past. Reason: If you book on monday for the previous day you want the booking to happen on friday.
@@ -49,11 +77,6 @@ const getCredentials = async (defaults = {}) => {
 };
 
 /**
- * Returns the last issues.
- * @returns {string[]} Returns the last issues.
- */
-const getLastIssues = () => configstore.get("lastIssues") || [];
-/**
  * Adds given issue to lastIssues cache.
  * @param {string} issue - The issue to add
  */
@@ -81,10 +104,11 @@ const addWorklog = async credentials => {
     let localCredentials = credentials;
     let answers = await inquirer.prompt([
         {
-            type: "list",
+            type: "autocomplete",
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
-            choices: [...getLastIssues(), "custom", ...config.issues],
+            // choices: [...getLastIssues(), "custom", ...config.issues],
+            source: searchKnownIssues,
         },
         {
             type: "input",
