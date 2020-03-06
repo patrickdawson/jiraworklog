@@ -5,7 +5,7 @@ const moment = require("moment");
 
 const { UP, DOWN, ENTER } = run;
 const cliPath = path.join(__dirname, "../app.js");
-moment.locale('de');
+moment.locale("de");
 
 describe("jiraworklog test", () => {
     beforeEach(() => {
@@ -25,8 +25,12 @@ describe("jiraworklog test", () => {
 
     it("prints out the correct datePast information", async () => {
         jest.useFakeTimers();
-        const datePast = moment().subtract((moment().weekday() === 0 ? 3 : 1), "days").format("dddd[,] LL");
+        const datePast = moment()
+            .subtract(moment().weekday() === 0 ? 3 : 1, "days")
+            .format("dddd[,] LL");
         const result = await run([cliPath], []);
-        expect(result).toMatch(new RegExp(`.*Buchen auf "gestern" bezieht sich auf den "${datePast}"\..*`));
+        expect(result).toMatch(
+            new RegExp(`.*Buchen auf "gestern" bezieht sich auf den "${datePast}"\..*`),
+        );
     });
 });

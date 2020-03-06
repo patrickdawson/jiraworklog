@@ -1,13 +1,13 @@
 const inquirer = require("inquirer");
 const moment = require("moment");
 const rest = require("superagent");
-const Conf = require('conf');
+const Conf = require("conf");
 
 const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const configstore = new Conf();
-moment.locale('de');
+moment.locale("de");
 
 /**
  * Calculates date past. Reason: If you book on monday for the previous day you want the booking to happen on friday.
@@ -27,17 +27,20 @@ const datePast = calculateDatePast();
  * @returns {Promise} Resolves with user and password
  */
 const getCredentials = async (defaults = {}) => {
-    const answers = await inquirer.prompt([{
-        type: "input",
-        name: "user",
-        message: "Für welchen Benutzer möchtest du buchen",
-        default: () => configstore.get("user"),
-    }, {
-        type: "password",
-        name: "password",
-        message: answers => `Passwort für den Benutzer ${answers.user || defaults.user}`,
-        when: () => !defaults.password,
-    }]);
+    const answers = await inquirer.prompt([
+        {
+            type: "input",
+            name: "user",
+            message: "Für welchen Benutzer möchtest du buchen",
+            default: () => configstore.get("user"),
+        },
+        {
+            type: "password",
+            name: "password",
+            message: answers => `Passwort für den Benutzer ${answers.user || defaults.user}`,
+            when: () => !defaults.password,
+        },
+    ]);
     configstore.set("user", answers.user);
     return {
         user: answers.user,
@@ -49,12 +52,12 @@ const getCredentials = async (defaults = {}) => {
  * Returns the last issues.
  * @returns {string[]} Returns the last issues.
  */
-const getLastIssues = () => (configstore.get("lastIssues") || []);
+const getLastIssues = () => configstore.get("lastIssues") || [];
 /**
  * Adds given issue to lastIssues cache.
  * @param {string} issue - The issue to add
  */
-const addToLastIssues = (issue) => {
+const addToLastIssues = issue => {
     let lastIssues = getLastIssues();
     // remove entry if it is already existing
     const idx = lastIssues.findIndex(v => v === issue);
@@ -68,21 +71,20 @@ const addToLastIssues = (issue) => {
         lastIssues.splice(config.maxLastIssues);
     }
     // save lastIssues
-    configstore.set("lastIssues", lastIssues.filter(v => !!v));
+    configstore.set(
+        "lastIssues",
+        lastIssues.filter(v => !!v),
+    );
 };
 
-const addWorklog = async (credentials) => {
+const addWorklog = async credentials => {
     let localCredentials = credentials;
     let answers = await inquirer.prompt([
         {
             type: "list",
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
-            choices: [
-                ...getLastIssues(),
-                "custom",
-                ...config.issues,
-            ],
+            choices: [...getLastIssues(), "custom", ...config.issues],
         },
         {
             type: "input",
@@ -123,10 +125,12 @@ const addWorklog = async (credentials) => {
     console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
 
     try {
-        await rest.post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
+        await rest
+            .post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
             .auth(localCredentials.user, localCredentials.password);
     } catch (err) {
-        if (err.statusCode === 401) { // Unauthorized
+        if (err.statusCode === 401) {
+            // Unauthorized
             console.log("Wrong username/password given.");
             localCredentials = await getCredentials(); // no defaults. User has to type in user and password
         } else {
@@ -134,11 +138,13 @@ const addWorklog = async (credentials) => {
         }
     }
 
-    answers = await inquirer.prompt([{
-        type: "confirm",
-        name: "continue",
-        message: "Weitere Buchung durchführen",
-    }]);
+    answers = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "continue",
+            message: "Weitere Buchung durchführen",
+        },
+    ]);
 
     if (answers.continue) {
         await addWorklog(localCredentials);
@@ -147,7 +153,11 @@ const addWorklog = async (credentials) => {
 
 (async () => {
     try {
-        console.log(`\nWilkommen beim JIRA worklog tool.\nBuchen auf "gestern" bezieht sich auf den "${datePast.format('dddd[,] LL')}".`);
+        console.log(
+            `\nWilkommen beim JIRA worklog tool.\nBuchen auf "gestern" bezieht sich auf den "${datePast.format(
+                "dddd[,] LL",
+            )}".`,
+        );
         const credentials = await getCredentials({ password: process.env["JIRA_PASS"] });
         await addWorklog(credentials);
     } catch (error) {
