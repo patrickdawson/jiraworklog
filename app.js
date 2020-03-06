@@ -107,8 +107,12 @@ const addWorklog = async credentials => {
             type: "autocomplete",
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
-            // choices: [...getLastIssues(), "custom", ...config.issues],
             source: searchKnownIssues,
+            filter: value => {
+                const issueKey = _.find(config.issues, issueObj => issueObj.name === value);
+                const result = issueKey ? issueKey.value : value;
+                return result;
+            },
         },
         {
             type: "input",
