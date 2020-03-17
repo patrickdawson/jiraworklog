@@ -13,6 +13,8 @@ moment.locale("de");
 
 inquirer.registerPrompt("autocomplete", require("inquirer-autocomplete-prompt"));
 
+const expandIssue = value => (/^[0-9].*/.test(value) ? `TXR-${value}` : value);
+
 /**
  * Returns the last issues.
  * @returns {string[]} Returns the last issues.
@@ -21,9 +23,10 @@ const getLastIssues = () => configstore.get("lastIssues") || [];
 
 /**
  * Get all issues including the last issues
+ * @param {boolean} [getKeys] Optional flag to get Issue keys instead of issue names for issues from configuration.
  * @return {string[]} All issue names as string array
  */
-const getAllIssues = () => [...getLastIssues(), "custom", ..._.map(config.issues, i => i.name)];
+const getAllIssues = (getKeys) => [...getLastIssues(), ..._.map(config.issues, i => (getKeys ? i.value : i.name))];
 
 /**
  * Search function for inquirer autocomplete prompt.
@@ -34,7 +37,11 @@ const getAllIssues = () => [...getLastIssues(), "custom", ..._.map(config.issues
 const searchKnownIssues = async (answersSoFar, input) => {
     input = input || "";
     let fuzzyResult = fuzzy.filter(input, getAllIssues());
-    return _.map(fuzzyResult, result => result.original);
+    const values = _.map(fuzzyResult, result => result.original);
+    if (input && !_.includes(values, expandIssue(input))) {
+        return [input, ...values];
+    }
+    return values;
 };
 
 /**
@@ -109,16 +116,10 @@ const addWorklog = async credentials => {
             message: "Welchen Issue willst du buchen",
             source: searchKnownIssues,
             filter: value => {
-                const issueKey = _.find(config.issues, issueObj => issueObj.name === value);
-                const result = issueKey ? issueKey.value : value;
+                const issueFromConfig = _.find(config.issues, ["name", value]);
+                const result = issueFromConfig ? issueFromConfig.value : expandIssue(value);
                 return result;
             },
-        },
-        {
-            type: "input",
-            name: "issue",
-            when: answers => answers.issueSelection === "custom",
-            filter: value => (/^[0-9].*/.test(value) ? `TXR-${value}` : value),
         },
         {
             type: "input",
@@ -137,10 +138,10 @@ const addWorklog = async credentials => {
         },
     ]);
 
-    let issue = answers.issueSelection;
-    if (answers.issueSelection === "custom") {
-        addToLastIssues(answers.issue);
-        issue = answers.issue;
+    const issue = answers.issueSelection;
+    const allIssueKeys = getAllIssues(true);
+    if (!_.includes(allIssueKeys, answers.issueSelection)) {
+        addToLastIssues(issue);
     }
 
     const dateToBook = answers.bookYesterday ? datePast : dateNow;
