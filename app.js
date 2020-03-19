@@ -5,6 +5,7 @@ const rest = require("superagent");
 const Conf = require("conf");
 const fuzzy = require("fuzzy");
 
+const { getCredentials } = require("./lib/credentials");
 const config = require("./config");
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
@@ -55,33 +56,6 @@ const calculateDatePast = () => {
 
 const dateNow = moment();
 const datePast = calculateDatePast();
-
-/**
- * Resolves with user and password configuration
- * @param {Object} defaults - The default user and password
- * @returns {Promise} Resolves with user and password
- */
-const getCredentials = async (defaults = {}) => {
-    const answers = await inquirer.prompt([
-        {
-            type: "input",
-            name: "user",
-            message: "Für welchen Benutzer möchtest du buchen",
-            default: () => configstore.get("user"),
-        },
-        {
-            type: "password",
-            name: "password",
-            message: answers => `Passwort für den Benutzer ${answers.user || defaults.user}`,
-            when: () => !defaults.password,
-        },
-    ]);
-    configstore.set("user", answers.user);
-    return {
-        user: answers.user,
-        password: defaults.password || answers.password,
-    };
-};
 
 /**
  * Adds given issue to lastIssues cache.
@@ -158,13 +132,7 @@ const addWorklog = async credentials => {
             .post(`https://zue-s-210/jira/rest/api/latest/issue/${issue}/worklog`, postData)
             .auth(localCredentials.user, localCredentials.password);
     } catch (err) {
-        if (err.statusCode === 401) {
-            // Unauthorized
-            console.log("Wrong username/password given.");
-            localCredentials = await getCredentials(); // no defaults. User has to type in user and password
-        } else {
-            console.log(`Failed to add worklog: Reason: ${err.message}`);
-        }
+        console.log(`Failed to add worklog: Reason: ${err.message}`);
     }
 
     answers = await inquirer.prompt([
@@ -187,7 +155,9 @@ const addWorklog = async credentials => {
                 "dddd[,] LL",
             )}".`,
         );
-        const credentials = await getCredentials({ password: process.env["JIRA_PASS"] });
+        const credentials = await getCredentials({ user: configstore.get("user"), password: process.env["JIRA_PASS"] });
+        configstore.set("user", credentials.user);
+
         await addWorklog(credentials);
     } catch (error) {
         console.error(error);
