@@ -14,5 +14,6 @@
         { "name": "DVV", "value": "TXR-13125" },
         { "name": "Studenten", "value": "TXR-13123" }
     ],
-    "maxLastIssues": 5
+    "maxLastIssues": 5,
+    "jiraUrl": "https://zue-s-210"
 }
