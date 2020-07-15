@@ -27,7 +27,10 @@ const getLastIssues = () => configstore.get("lastIssues") || [];
  * @param {boolean} [getKeys] Optional flag to get Issue keys instead of issue names for issues from configuration.
  * @return {string[]} All issue names as string array
  */
-const getAllIssues = (getKeys) => [...getLastIssues(), ..._.map(config.issues, i => (getKeys ? i.value : i.name))];
+const getAllIssues = getKeys => [
+    ...getLastIssues(),
+    ..._.map(config.issues, i => (getKeys ? i.value : i.name)),
+];
 
 /**
  * Search function for inquirer autocomplete prompt.
@@ -104,6 +107,14 @@ const addWorklog = async credentials => {
             type: "input",
             name: "message",
             message: "Buchungstext (optional)",
+            when: answers => answers.issueSelection !== getIssueKeyByName("Sonstiges")
+        },
+        {
+            type: "input",
+            name: "message",
+            message: "Buchungstext",
+            default: "Emails/Confluence/Buchen",
+            when: answers => answers.issueSelection === getIssueKeyByName("Sonstiges")
         },
         {
             type: "confirm",
@@ -148,6 +159,15 @@ const addWorklog = async credentials => {
     }
 };
 
+const getIssueKeyByName = name => {
+    const issue = _.find(config.issues, ["name", name]);
+    if (!_.isNil(issue)) {
+        return issue.value;
+    }
+    throw new Error(`Issue with name '${name}' not found!`);
+}
+
+
 (async () => {
     try {
         console.log(
@@ -155,7 +175,10 @@ const addWorklog = async credentials => {
                 "dddd[,] LL",
             )}".`,
         );
-        const credentials = await getCredentials({ user: configstore.get("user"), password: process.env["JIRA_PASS"] });
+        const credentials = await getCredentials({
+            user: configstore.get("user"),
+            password: process.env["JIRA_PASS"],
+        });
         configstore.set("user", credentials.user);
 
         await addWorklog(credentials);

@@ -1,0 +1,22 @@
+# Ignored files
+package-lock.json
+
+# Ignored directories
+node_modules
+doc
+plugins
+src/migration/steps
+
+# Test data
+test/**/testdata
+integrationtest/**/data
+integrationtest/gatling/loadtest
+
+# Temporary directories
+data
+exportsTest
+exportsIntegrationTest
+coverage
+minJs
+install
+
