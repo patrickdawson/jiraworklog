@@ -16,6 +16,8 @@ jest.mock("../config.json");
 
 const consoleLogMock = jest.fn();
 global.console.log = consoleLogMock;
+const consoleErrorMock = jest.fn();
+global.console.error = consoleErrorMock;
 
 describe("run test", () => {
     let postScope;
@@ -25,20 +27,43 @@ describe("run test", () => {
         config.issues = [{ name: "Sonstiges", value: "TXR-13128" }];
     });
 
+    beforeEach(jest.useFakeTimers)
+    afterEach(jest.useRealTimers)
+
     beforeEach(() => {
         credentials.getCredentials.mockResolvedValue({ user: "user1" });
-        inquirer.prompt.mockResolvedValue({
-            issueSelection: "TXR-1234",
-        });
-        postScope = nock("http://jira")
-            .post("/jira/rest/api/latest/issue/TXR-1234/worklog")
-            .reply(200);
 
-        consoleLogMock.mockClear();
+        const dayToBook = moment()
+            .subtract(moment().weekday() === 0 ? 3 : 1, "days");
+        
+        inquirer.prompt.mockResolvedValueOnce({
+            dayToBook: dayToBook.format("dddd[,] LL"),
+        });
+        inquirer.prompt.mockResolvedValueOnce({
+            issueSelection: "TXR-1234",
+            time: "1d",
+            message: "message to book",
+        });
+        inquirer.prompt.mockResolvedValueOnce({
+            continue: false,
+        });
+    
+        postScope = nock("http://jira")
+            .post("/jira/rest/api/latest/issue/TXR-1234/worklog", (args) => { 
+                return {
+                    comment: "message to book",
+                    time: "1d",
+                    started: dayToBook.toISOString().replace("Z", "+0000"),
+                }; 
+            })
+            .reply(200);
     });
 
     afterEach(() => {
         nock.cleanAll();
+        inquirer.prompt.mockReset();
+        consoleLogMock.mockClear();
+        consoleErrorMock.mockClear();
     });
 
     describe("Welcome message", () => {
@@ -46,19 +71,6 @@ describe("run test", () => {
             await testModule.run();
             expect(consoleLogMock).toHaveBeenCalledWith(
                 expect.stringMatching(/.*Wilkommen beim JIRA worklog tool\..*/),
-            );
-        });
-
-        it("prints out the correct datePast information", async () => {
-            jest.useFakeTimers();
-            const datePast = moment()
-                .subtract(moment().weekday() === 0 ? 3 : 1, "days")
-                .format("dddd[,] LL");
-            await testModule.run();
-            expect(consoleLogMock).toHaveBeenCalledWith(
-                expect.stringMatching(
-                    new RegExp(`.*Buchen auf "gestern" bezieht sich auf den "${datePast}"\..*`),
-                ),
             );
         });
     });
@@ -100,6 +112,7 @@ describe("run test", () => {
     describe("jira interaction", () => {
         it("posts worklog to jira", async () => {
             await testModule.run();
+            expect(consoleErrorMock).toHaveBeenCalledTimes(0);
             expect(postScope.pendingMocks()).toHaveLength(0);
         });
     });
