@@ -20,6 +20,6 @@
         { "name": "IT/Homeoffice Probleme", "value": "TXR-13665" },
         { "name": "Studenten", "value": "TXR-13123" }
     ],
-    "maxLastIssues": 5,
+    "maxLastIssues": 10,
     "jiraUrl": "https://zue-s-210"
 }
