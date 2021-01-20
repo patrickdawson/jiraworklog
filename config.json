@@ -18,7 +18,8 @@
         { "name": "Einarbeitung neuer Mitarbeiter", "value": "TXR-16071" },
         { "name": "DVV", "value": "TXR-16068" },
         { "name": "IT/Homeoffice Probleme", "value": "TXR-16063" },
-        { "name": "Studenten", "value": "TXR-16070" }
+        { "name": "Studenten", "value": "TXR-16070" },
+        { "name": "CFT Test", "value": "TXR-11660" }
     ],
     "maxLastIssues": 10,
     "jiraUrl": "https://zue-s-210"
