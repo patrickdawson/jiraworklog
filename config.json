@@ -22,5 +22,5 @@
         { "name": "CFT Test", "value": "TXR-11660" }
     ],
     "maxLastIssues": 10,
-    "jiraUrl": "https://zue-s-210"
+    "jiraUrl": "https://zue-s-210.zwickroell.com/jira"
 }

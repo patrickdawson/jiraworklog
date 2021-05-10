@@ -49,7 +49,7 @@ describe("run test", () => {
         });
     
         postScope = nock("http://jira")
-            .post("/jira/rest/api/latest/issue/TXR-1234/worklog", (args) => { 
+            .post("/rest/api/latest/issue/TXR-1234/worklog", (args) => { 
                 return {
                     comment: "message to book",
                     time: "1d",
