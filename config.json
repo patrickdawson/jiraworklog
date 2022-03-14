@@ -23,5 +23,5 @@
         { "name": "CFT Test", "value": "TXR-15584" }
     ],
     "maxLastIssues": 10,
-    "jiraUrl": "https://zue-s-210/jira"
+    "jiraUrl": "https://jira.zue.zwick.de"
 }
