@@ -1,4 +1,3 @@
-const path = require("path");
 const nock = require("nock");
 const moment = require("moment");
 const inquirer = require("inquirer");
@@ -27,8 +26,13 @@ describe("run test", () => {
         config.issues = [{ name: "Sonstiges", value: "TXR-13128" }];
     });
 
-    beforeEach(jest.useFakeTimers)
-    afterEach(jest.useRealTimers)
+    beforeEach(() => {
+        jest.useFakeTimers("legacy")
+    })
+
+    afterEach(() => {
+        jest.useRealTimers()
+    })
 
     beforeEach(() => {
         credentials.getCredentials.mockResolvedValue({ user: "user1" });
@@ -49,7 +53,7 @@ describe("run test", () => {
         });
     
         postScope = nock("http://jira")
-            .post("/rest/api/latest/issue/TXR-1234/worklog", (args) => { 
+            .post("/rest/api/latest/issue/TXR-1234/worklog", () => {
                 return {
                     comment: "message to book",
                     time: "1d",
