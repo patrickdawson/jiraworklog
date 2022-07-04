@@ -3,14 +3,14 @@ const moment = require("moment");
 const inquirer = require("inquirer");
 const conf = require("conf");
 const testModule = require("../lib/run");
-const credentials = require("../lib/credentials");
+const auth = require("../lib/auth");
 const config = require("../config.json");
 
 moment.locale("de");
 
 jest.mock("inquirer");
 jest.mock("conf");
-jest.mock("../lib/credentials");
+jest.mock("../lib/auth");
 jest.mock("../config.json");
 
 const consoleLogMock = jest.fn();
@@ -35,11 +35,11 @@ describe("run test", () => {
     })
 
     beforeEach(() => {
-        credentials.getCredentials.mockResolvedValue({ user: "user1" });
+        auth.getAuthorization.mockResolvedValue({ user: "user1" });
 
         const dayToBook = moment()
             .subtract(moment().weekday() === 0 ? 3 : 1, "days");
-        
+
         inquirer.prompt.mockResolvedValueOnce({
             dayToBook: dayToBook.format("dddd[,] LL"),
         });
@@ -51,14 +51,14 @@ describe("run test", () => {
         inquirer.prompt.mockResolvedValueOnce({
             continue: false,
         });
-    
+
         postScope = nock("http://jira")
             .post("/rest/api/latest/issue/TXR-1234/worklog", () => {
                 return {
                     comment: "message to book",
                     time: "1d",
                     started: dayToBook.toISOString().replace("Z", "+0000"),
-                }; 
+                };
             })
             .reply(200);
     });
@@ -79,24 +79,9 @@ describe("run test", () => {
         });
     });
 
-    describe("credentials", () => {
-        beforeEach(() => {
-            process.env["JIRA_PASS"] = "pass1";
-            conf.mock.instances[0].get.mockImplementation(val =>
-                val === "user" ? "user1" : undefined,
-            );
-        });
-
-        it("calls getCredentials with configstore user and JIRA_PASS env var", async () => {
-            await testModule.run();
-            expect(credentials.getCredentials).toHaveBeenCalledWith({
-                user: "user1",
-                password: "pass1",
-            });
-        });
-
+    describe("auth", () => {
         it("sets returned user of getCredentials into configstore", async () => {
-            credentials.getCredentials.mockResolvedValue({ user: "newUser" });
+            auth.getAuthorization.mockResolvedValue({ user: "newUser" });
             await testModule.run();
             expect(conf.mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
         });
