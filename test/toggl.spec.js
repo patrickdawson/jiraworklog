@@ -123,7 +123,7 @@ describe("run test", () => {
             expect(result).toEqual([
                 {
                     issueKey: "TXR-18227",
-                    duration: "1m",
+                    durationMin: 1,
                     description: "Emails/Confluence",
                 },
             ]);
@@ -150,12 +150,12 @@ describe("run test", () => {
             expect(result).toEqual([
                 {
                     issueKey: "TXR-18227",
-                    duration: "3m", // 60s + 120s
+                    durationMin: 3, // 60s + 120s
                     description: "Emails/Confluence, Videobotschaft",
                 },
                 {
                     issueKey: "TXR-18224",
-                    duration: "5m",
+                    durationMin: 5,
                     description: "ZE Abstimmung",
                 },
             ]);
@@ -182,12 +182,12 @@ describe("run test", () => {
             expect(result).toEqual([
                 {
                     issueKey: "TXR-1234",
-                    duration: "1m",
+                    durationMin: 1,
                     description: "Message 1",
                 },
                 {
                     issueKey: "TXR-5678",
-                    duration: "7m", // 120s + 300s
+                    durationMin: 7, // 120s + 300s
                     description: "Message 2, Message 3",
                 },
             ]);
@@ -219,12 +219,12 @@ describe("run test", () => {
             expect(result).toEqual([
                 {
                     issueKey: "TXR-18227",
-                    duration: "2m", // 60s + 60s
+                    durationMin: 2, // 60s + 60s
                     description: "Emails/Confluence",
                 },
                 {
                     issueKey: "TXR-1234",
-                    duration: "4m", // 120s + 120s
+                    durationMin: 4, // 120s + 120s
                     description: "Message 1",
                 },
             ]);
@@ -256,13 +256,40 @@ describe("run test", () => {
             expect(result).toEqual([
                 {
                     issueKey: "TXR-1234",
-                    duration: "1m",
+                    durationMin: 1,
                     description: "Message 1",
                 },
                 {
                     issueKey: "TXR-5678",
-                    duration: "9m", // 120s + 180s + 240s
+                    durationMin: 9, // 120s + 180s + 240s
                     description: "Message 2, Message 3",
+                },
+            ]);
+        });
+
+        it("ignores toggl entries that do not conform to our convention", () => {
+            const result = testModule.convertToWorkLogEntries([
+                {
+                    description: "Some issue title TXR-1234 Message 1",
+                    project: "Unknown Project",
+                    duration: 60,
+                },
+                {
+                    description: "Other Issue TXR-5678",
+                    project: "Unknown Project",
+                    duration: 120,
+                },
+            ]);
+            expect(result).toEqual([
+                {
+                    issueKey: "TXR-1234",
+                    durationMin: 1,
+                    description: "Message 1",
+                },
+                {
+                    issueKey: "TXR-5678",
+                    durationMin: 2,
+                    description: "",
                 },
             ]);
         });
