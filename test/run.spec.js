@@ -11,6 +11,7 @@ moment.locale("de");
 jest.mock("inquirer");
 jest.mock("conf");
 jest.mock("../lib/auth");
+jest.mock("../lib/toggl");
 jest.mock("../config.json");
 
 const consoleLogMock = jest.fn();
@@ -27,21 +28,23 @@ describe("run test", () => {
     });
 
     beforeEach(() => {
-        jest.useFakeTimers("legacy")
-    })
+        jest.useFakeTimers("legacy");
+    });
 
     afterEach(() => {
-        jest.useRealTimers()
-    })
+        jest.useRealTimers();
+    });
 
     beforeEach(() => {
         auth.getAuthorization.mockResolvedValue({ user: "user1" });
 
-        const dayToBook = moment()
-            .subtract(moment().weekday() === 0 ? 3 : 1, "days");
+        const dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
 
         inquirer.prompt.mockResolvedValueOnce({
             dayToBook: dayToBook.format("dddd[,] LL"),
+        });
+        inquirer.prompt.mockResolvedValueOnce({
+            toggl: false,
         });
         inquirer.prompt.mockResolvedValueOnce({
             issueSelection: "TXR-1234",
@@ -93,7 +96,7 @@ describe("run test", () => {
             expect(key).toEqual("TXR-13128");
         });
 
-        it("rejects if name is not found", function() {
+        it("rejects if name is not found", function () {
             expect(() => testModule.getIssueKeyByName("na")).toThrow(/not found/);
         });
     });
