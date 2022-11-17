@@ -5,6 +5,7 @@ const conf = require("conf");
 const testModule = require("../lib/run");
 const auth = require("../lib/auth");
 const config = require("../config.json");
+const toggl = require("../lib/toggl");
 
 moment.locale("de");
 
@@ -21,6 +22,7 @@ global.console.error = consoleErrorMock;
 
 describe("run test", () => {
     let postScope;
+    let dayToBook;
 
     beforeAll(() => {
         config.jiraUrl = "http://jira";
@@ -38,7 +40,7 @@ describe("run test", () => {
     beforeEach(() => {
         auth.getAuthorization.mockResolvedValue({ user: "user1" });
 
-        const dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
+        dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
 
         inquirer.prompt.mockResolvedValueOnce({
             dayToBook: dayToBook.format("dddd[,] LL"),
@@ -101,11 +103,80 @@ describe("run test", () => {
         });
     });
 
-    describe("jira interaction", () => {
-        it("posts worklog to jira", async () => {
-            await testModule.run();
-            expect(consoleErrorMock).toHaveBeenCalledTimes(0);
-            expect(postScope.pendingMocks()).toHaveLength(0);
+    describe("run", () => {
+        describe("manual modle", () => {
+            it("posts worklog to jira", async () => {
+                await testModule.run();
+                expect(consoleErrorMock).toHaveBeenCalledTimes(0);
+                expect(postScope.pendingMocks()).toHaveLength(0);
+            });
+        });
+
+        describe("toggl mode", () => {
+            beforeEach(() => {
+                inquirer.prompt.mockReset();
+                inquirer.prompt.mockResolvedValueOnce({
+                    dayToBook: dayToBook.format("dddd[,] LL"),
+                });
+                inquirer.prompt.mockResolvedValueOnce({ toggl: true });
+                inquirer.prompt.mockResolvedValueOnce({ sendToJira: true });
+                inquirer.prompt.mockResolvedValueOnce({ continue: false });
+                toggl.getTimeEntries.mockResolvedValue([
+                    { project: "Sonstiges", duration: 60, description: "Foo" },
+                ]);
+                toggl.convertToWorkLogEntries.mockReturnValue([
+                    { issueKey: "TXR-1234", durationMin: 1, description: "Foo" },
+                ]);
+            });
+
+            it("posts worklog to jira", async () => {
+                await testModule.run();
+
+                expect(consoleErrorMock).toHaveBeenCalledTimes(0);
+                expect(postScope.pendingMocks()).toHaveLength(0);
+            });
+
+            it("does not post worklog to jira if sendToJira is false", async () => {
+                inquirer.prompt.mockReset();
+                inquirer.prompt.mockResolvedValueOnce({
+                    dayToBook: dayToBook.format("dddd[,] LL"),
+                });
+                inquirer.prompt.mockResolvedValueOnce({ toggl: true });
+                inquirer.prompt.mockResolvedValueOnce({ sendToJira: false });
+                inquirer.prompt.mockResolvedValueOnce({ continue: false });
+
+                await testModule.run();
+
+                expect(consoleErrorMock).toHaveBeenCalledTimes(0);
+                expect(postScope.pendingMocks()).toHaveLength(1);
+            });
+
+            it("does not post worklog to jira if an issueKey is undefined", async () => {
+                toggl.convertToWorkLogEntries.mockReturnValue([
+                    { issueKey: undefined, durationMin: 1, description: "Foo" },
+                ]);
+
+                await testModule.run();
+
+                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+                expect(consoleErrorMock).toHaveBeenCalledWith(
+                    expect.stringMatching(
+                        /Detected 'undefined' issue key. There is something wrong with your configuration/,
+                    ),
+                );
+                expect(postScope.pendingMocks()).toHaveLength(1);
+            });
+
+            it("prints summary of worklog entries", async () => {
+                await testModule.run();
+
+                expect(consoleLogMock).toHaveBeenCalledWith(
+                    "Issue: TXR-1234, Duration: 1m, Description: Foo",
+                );
+                expect(consoleLogMock).toHaveBeenCalledWith(
+                    expect.stringMatching(/Zeit insgesamt: 0.01.*Stunden \(1 Minuten\)/),
+                );
+            });
         });
     });
 });
