@@ -8,9 +8,19 @@ jest.mock("../config.json");
 const dateStart = moment("2022-01-01");
 const dateEnd = moment("2022-01-02");
 
+function createTogglGetWorkspacesScope(
+    replyStatus = 200,
+    replyValue = [{ name: "Zwick", id: "123" }],
+) {
+    return nock("http://toggl")
+        .get("/workspaces")
+        .basicAuth({ user: "mytoken", pass: "api_token" })
+        .reply(replyStatus, replyValue);
+}
+
 function createTogglGetProjectsScope(replyStatus = 200, replyValue = []) {
     return nock("http://toggl")
-        .get(`/workspaces/${config.togglWorkspaceId}/projects`)
+        .get("/workspaces/123/projects")
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);
 }
@@ -26,7 +36,8 @@ function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue = []) {
         .reply(replyStatus, replyValue);
 }
 
-describe("run test", () => {
+describe("toggl module", () => {
+    let getTogglWorkspacesScope;
     let getTogglProjectsScope;
     let getTogglTimeEntriesScope;
 
@@ -48,12 +59,15 @@ describe("run test", () => {
 
     describe("getProjectsIdToNameDict", () => {
         it("gets projects from toggl", async () => {
+            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope();
+
             await testModule.getProjectsIdToNameDict();
             expect(getTogglProjectsScope.isDone()).toBeTruthy();
         });
 
         it("converts the returned projects to a dictionary", async () => {
+            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope(200, [
                 { id: 1, name: "project1" },
                 { id: 2, name: "project2" },
@@ -68,13 +82,16 @@ describe("run test", () => {
 
     describe("getTimeEntries", () => {
         it("gets time entries from toggl", async () => {
+            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope();
             getTogglTimeEntriesScope = createTogglGetTimeEntriesScope();
+
             await testModule.getTimeEntries(dateStart);
             expect(getTogglTimeEntriesScope.isDone()).toBeTruthy();
         });
 
         it("returns an array with time entries", async () => {
+            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope(200, [
                 { id: 11542245, name: "Sonstiges" },
             ]);

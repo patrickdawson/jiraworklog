@@ -25,5 +25,5 @@
     "maxLastIssues": 10,
     "jiraUrl": "https://jira.zue.zwick.de",
     "togglUrl": "https://api.track.toggl.com/api/v9",
-    "togglWorkspaceId": "1124947"
+    "togglWorkspace": "Zwick"
 }
