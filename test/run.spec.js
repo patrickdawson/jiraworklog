@@ -153,7 +153,7 @@ describe("run test", () => {
 
             it("does not post worklog to jira if an issueKey is undefined", async () => {
                 toggl.convertToWorkLogEntries.mockReturnValue([
-                    { issueKey: undefined, durationMin: 1, description: "Foo" },
+                    { issueKey: "undefined", durationMin: 1, description: "Foo" },
                 ]);
 
                 await testModule.run();
@@ -171,7 +171,7 @@ describe("run test", () => {
                 await testModule.run();
 
                 expect(consoleLogMock).toHaveBeenCalledWith(
-                    "Issue: TXR-1234, Duration: 1m, Description: Foo",
+                    expect.stringMatching(/TXR-1234 │ Custom │ 1/),
                 );
                 expect(consoleLogMock).toHaveBeenCalledWith(
                     expect.stringMatching(/Zeit insgesamt: 0.01.*Stunden \(1 Minuten\)/),
