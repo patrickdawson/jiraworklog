@@ -6,6 +6,11 @@ Command line tool to add worklogs quickly
 * Print summary of toggl time entries before adding them to jira
 * Add manual time entries with inquirer
 
+# Jira Setup
+You can setup either `JIRA_TOKEN` or insert username and password on each start. This is the prefered method.
+As an alternative you could save your password in `JIRA_PASS` and omit the entry of the password each time.
+
+
 # Setup for auto import with toggl
 * Get your Toggl API token from https://track.toggl.com/profile
 * Set environment variable `TOGGL_API_TOKEN` to your API token
