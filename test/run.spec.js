@@ -167,6 +167,23 @@ describe("run test", () => {
                 expect(postScope.pendingMocks()).toHaveLength(1);
             });
 
+            it("does only post valid worklog entries to jira", async () => {
+                toggl.convertToWorkLogEntries.mockReturnValue([
+                    { issueKey: "TXR-1234", durationMin: 1, description: "Foo" },
+                    { issueKey: "undefined", durationMin: 2, description: "Bar" },
+                ]);
+
+                await testModule.run();
+
+                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+                expect(consoleErrorMock).toHaveBeenCalledWith(
+                    expect.stringMatching(
+                        /Detected 'undefined' issue key. There is something wrong with your configuration/,
+                    ),
+                );
+                expect(postScope.pendingMocks()).toHaveLength(0);
+            });
+
             it("prints summary of worklog entries", async () => {
                 await testModule.run();
 
