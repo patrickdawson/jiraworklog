@@ -158,12 +158,6 @@ describe("run test", () => {
 
                 await testModule.run();
 
-                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-                expect(consoleErrorMock).toHaveBeenCalledWith(
-                    expect.stringMatching(
-                        /Detected 'undefined' issue key. There is something wrong with your configuration/,
-                    ),
-                );
                 expect(postScope.pendingMocks()).toHaveLength(1);
             });
 
@@ -175,12 +169,6 @@ describe("run test", () => {
 
                 await testModule.run();
 
-                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-                expect(consoleErrorMock).toHaveBeenCalledWith(
-                    expect.stringMatching(
-                        /Detected 'undefined' issue key. There is something wrong with your configuration/,
-                    ),
-                );
                 expect(postScope.pendingMocks()).toHaveLength(0);
             });
 
