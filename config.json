@@ -23,6 +23,7 @@
         { "name": "CFT Test", "value": "TXR-15584" }
     ],
     "maxLastIssues": 10,
+    "maxLastDays": 30,
     "jiraUrl": "https://jira.zue.zwick.de",
     "togglUrl": "https://api.track.toggl.com/api/v9",
     "togglWorkspace": "Zwick",
