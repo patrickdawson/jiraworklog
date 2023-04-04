@@ -27,5 +27,5 @@
     "jiraUrl": "https://jira.zue.zwick.de",
     "togglUrl": "https://api.track.toggl.com/api/v9",
     "togglWorkspace": "Zwick",
-    "jiraProjectKey": "TXR"
+    "jiraProjectKeys": ["TXR", "TXRS", "TXAT"]
 }

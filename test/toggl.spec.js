@@ -47,6 +47,7 @@ describe("toggl module", () => {
             { name: "Sonstiges", value: "TXR-18227" },
             { name: "Sonderbesprechung", value: "TXR-18224" },
         ];
+        config.jiraProjectKeys = ["TXR", "TXAT"];
     });
 
     beforeEach(() => {
@@ -305,6 +306,33 @@ describe("toggl module", () => {
                 },
                 {
                     issueKey: "TXR-5678",
+                    durationMin: 2,
+                    description: "",
+                },
+            ]);
+        });
+
+        it("creates worklog entries for multiple jira projects", () => {
+            const result = testModule.convertToWorkLogEntries([
+                {
+                    description: "Some issue title TXR-1234 Message 1",
+                    project: "Unknown Project",
+                    duration: 60,
+                },
+                {
+                    description: "Other Issue TXAT-5678",
+                    project: "Unknown Project",
+                    duration: 120,
+                },
+            ]);
+            expect(result).toEqual([
+                {
+                    issueKey: "TXR-1234",
+                    durationMin: 1,
+                    description: "Message 1",
+                },
+                {
+                    issueKey: "TXAT-5678",
                     durationMin: 2,
                     description: "",
                 },
