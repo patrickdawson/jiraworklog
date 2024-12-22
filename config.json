@@ -1,99 +1,94 @@
 {
-  "issues": [
-    {
-      "name": "Daily",
-      "value": "TXR-22880"
-    },
-    {
-      "name": "Sonstiges",
-      "value": "TXR-22902"
-    },
-    {
-      "name": "Grooming",
-      "value": "TXR-22881"
-    },
-    {
-      "name": "Iterationsabschluss/Iterationsplanung",
-      "value": "TXR-22882"
-    },
-    {
-      "name": "TL-Tätigkeiten",
-      "value": "TXR-22905"
-    },
-    {
-      "name": "TL-Regeltermine",
-      "value": "TXR-22904"
-    },
-    {
-      "name": "Produktmgt",
-      "value": "TXR-22891"
-    },
-    {
-      "name": "Sonderbesprechung",
-      "value": "TXR-22899"
-    },
-    {
-      "name": "Support Unternehmensbereiche",
-      "value": "TXR-22892"
-    },
-    {
-      "name": "Bamboo Fehlerbehebungen",
-      "value": "TXR-23120"
-    },
-    {
-      "name": "Schulungen",
-      "value": "TXR-22895"
-    },
-    {
-      "name": "Messe",
-      "value": "TXR-22896"
-    },
-    {
-      "name": "Bugs",
-      "value": "TXR-2833"
-    },
-    {
-      "name": "Architektur",
-      "value": "TXR-22906"
-    },
-    {
-      "name": "Risikomgt",
-      "value": "TXR-22907"
-    },
-    {
-      "name": "Lieferantenmgt",
-      "value": "TXR-22900"
-    },
-    {
-      "name": "Einarbeitung neuer Mitarbeiter",
-      "value": "TXR-22897"
-    },
-    {
-      "name": "DVV",
-      "value": "TXR-22893"
-    },
-    {
-      "name": "IT/Homeoffice Probleme",
-      "value": "TXR-22901"
-    },
-    {
-      "name": "Studenten",
-      "value": "TXR-22898"
-    },
-    {
-      "name": "CFT Test",
-      "value": "TXR-18369"
-    }
-  ],
-  "maxLastIssues": 10,
-  "maxLastDays": 30,
-  "jiraUrl": "https://jira.zue.zwick.de",
-  "togglUrl": "https://api.track.toggl.com/api/v9",
-  "togglWorkspace": "Zwick",
-  "jiraProjectKeys": [
-    "TXR",
-    "TXRS",
-    "TXAT",
-    "DS"
-  ]
+    "issues": [
+        {
+            "name": "Daily",
+            "value": "TXR-25664"
+        },
+        {
+            "name": "Sonstiges",
+            "value": "TXR-25677"
+        },
+        {
+            "name": "Grooming",
+            "value": "TXR-25665"
+        },
+        {
+            "name": "Iterationsabschluss/Iterationsplanung",
+            "value": "TXR-25666"
+        },
+        {
+            "name": "TL-Tätigkeiten",
+            "value": "TXR-25679"
+        },
+        {
+            "name": "TL-Regeltermine",
+            "value": "TXR-25678"
+        },
+        {
+            "name": "Produktmgt",
+            "value": "TXR-25667"
+        },
+        {
+            "name": "Sonderbesprechung",
+            "value": "TXR-25674"
+        },
+        {
+            "name": "Support Unternehmensbereiche",
+            "value": "TXR-25668"
+        },
+        {
+            "name": "Bamboo Fehlerbehebungen",
+            "value": "TXR-25682"
+        },
+        {
+            "name": "Schulungen",
+            "value": "TXR-25670"
+        },
+        {
+            "name": "Messe",
+            "value": "TXR-25671"
+        },
+        {
+            "name": "Bugs",
+            "value": "TXR-2833"
+        },
+        {
+            "name": "Architektur",
+            "value": "TXR-25680"
+        },
+        {
+            "name": "Risikomgt",
+            "value": "TXR-25681"
+        },
+        {
+            "name": "Lieferantenmgt",
+            "value": "TXR-25675"
+        },
+        {
+            "name": "Einarbeitung neuer Mitarbeiter",
+            "value": "TXR-25672"
+        },
+        {
+            "name": "DVV",
+            "value": "TXR-25669"
+        },
+        {
+            "name": "IT/Homeoffice Probleme",
+            "value": "TXR-25676"
+        },
+        {
+            "name": "Studenten",
+            "value": "TXR-25673"
+        },
+        {
+            "name": "CFT Test",
+            "value": "TXR-25685"
+        }
+    ],
+    "maxLastIssues": 10,
+    "maxLastDays": 30,
+    "jiraUrl": "https://jira.zue.zwick.de",
+    "togglUrl": "https://api.track.toggl.com/api/v9",
+    "togglWorkspace": "Zwick",
+    "jiraProjectKeys": ["TXR", "TXRS", "TXAT", "DS"]
 }
