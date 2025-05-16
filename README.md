@@ -2,22 +2,28 @@
 Command line tool to add worklogs quickly
 
 # Features
+
 * Import time entries from toggl directly into Jira
 * Print summary of toggl time entries before adding them to jira
 * Add manual time entries with inquirer
 
+
 # Jira Setup
-You can setup either `JIRA_TOKEN` or insert username and password on each start. This is the prefered method.
+
+You can setup either `JIRA_TOKEN` or insert username and password on each start. This is the preferred method.
 As an alternative you could save your password in `JIRA_PASS` and omit the entry of the password each time.
 
 
 # Setup for auto import with toggl
+
 * Get your Toggl API token from https://track.toggl.com/profile
 * Set environment variable `TOGGL_API_TOKEN` to your API token
 * Use toggl workspace with name `Zwick` (or change the workspace name in `config.json`)
 * Setup toggl projects according to `config.json` e.g. "Daily", "Sonstiges" etc. The names must match exactly.
 
+
 # How to format your toggl entries
+
 * All time entries with fixed toggl projects (from `config.json`) use the text description for the work log comment.
 * All other time entries are parsed like this: <custom name> <TXR-xxxxx> <work log comment>
   * The custom name is purely used to remember what each issue is about. It is not used in the work log comment.
@@ -26,4 +32,5 @@ As an alternative you could save your password in `JIRA_PASS` and omit the entry
 
 
 # Ideas
+
 - [x] Print toggl daily summary before asking to post
