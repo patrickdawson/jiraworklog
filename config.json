@@ -2,55 +2,55 @@
     "issues": [
         {
             "name": "Daily",
-            "value": "TXR-25664"
+            "value": "TXPIV-59"
         },
         {
             "name": "Sonstiges",
-            "value": "TXR-25677"
+            "value": "TXPIV-46"
         },
         {
             "name": "Grooming",
-            "value": "TXR-25665"
+            "value": "TXPIV-58"
         },
         {
             "name": "Iterationsabschluss/Iterationsplanung",
-            "value": "TXR-25666"
+            "value": "TXPIV-57"
         },
         {
             "name": "TL-Tätigkeiten",
-            "value": "TXR-25679"
+            "value": "TXPIV-44"
         },
         {
             "name": "TL-Regeltermine",
-            "value": "TXR-25678"
+            "value": "TXPIV-45"
         },
         {
             "name": "Produktmgt",
-            "value": "TXR-25667"
+            "value": "TXPIV-56"
         },
         {
             "name": "Sonderbesprechung",
-            "value": "TXR-25674"
+            "value": "TXPIV-49"
         },
         {
             "name": "Support Unternehmensbereiche",
-            "value": "TXR-25668"
+            "value": "TXPIV-55"
         },
         {
             "name": "Infrastruktur Probleme",
-            "value": "TXR-26802"
+            "value": "TXPIV-17"
         },
         {
             "name": "Bamboo Fehlerbehebungen",
-            "value": "TXR-25682"
+            "value": "TXPIV-41"
         },
         {
             "name": "Schulungen",
-            "value": "TXR-25670"
+            "value": "TXPIV-53"
         },
         {
             "name": "Messe",
-            "value": "TXR-25671"
+            "value": "TXPIV-52"
         },
         {
             "name": "Bugs",
@@ -58,35 +58,39 @@
         },
         {
             "name": "Architektur",
-            "value": "TXR-25680"
+            "value": "TXPIV-43"
         },
         {
             "name": "Risikomgt",
-            "value": "TXR-25681"
+            "value": "TXPIV-42"
         },
         {
             "name": "Lieferantenmgt",
-            "value": "TXR-25675"
+            "value": "TXPIV-48"
         },
         {
             "name": "Einarbeitung neuer Mitarbeiter",
-            "value": "TXR-25672"
+            "value": "TXPIV-51"
         },
         {
             "name": "DVV",
-            "value": "TXR-25669"
+            "value": "TXPIV-54"
         },
         {
             "name": "IT/Homeoffice Probleme",
-            "value": "TXR-25676"
+            "value": "TXPIV-47"
         },
         {
             "name": "Studenten",
-            "value": "TXR-25673"
+            "value": "TXPIV-50"
         },
         {
             "name": "CFT Test",
-            "value": "TXR-25685"
+            "value": "TXPIV-38"
+        },
+        {
+            "name": "Ideenmanagement",
+            "value": "TXPIV-40"
         }
     ],
     "maxLastIssues": 10,
