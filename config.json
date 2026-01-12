@@ -87,6 +87,10 @@
         {
             "name": "CFT Test",
             "value": "TXPIV-38"
+        },
+        {
+            "name": "Ideenmanagement",
+            "value": "TXPIV-40"
         }
     ],
     "maxLastIssues": 10,
