@@ -6,6 +6,8 @@
     "scripts": {
         "test": "jest",
         "test:dev": "jest --watch",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
         "prettier": "prettier --check **/*.{js,json}",
         "prettier:write": "prettier --write **/*.{js,json}"
     },
@@ -24,6 +26,10 @@
         "table": "6.8.1"
     },
     "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "eslint": "10.0.0",
+        "eslint-config-prettier": "10.1.8",
+        "globals": "17.3.0",
         "inquirer-test": "2.0.1",
         "jest": "27.5.1",
         "nock": "13.2.4",

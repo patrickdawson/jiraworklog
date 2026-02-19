@@ -37,7 +37,7 @@ function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue = []) {
 }
 
 describe("toggl module", () => {
-    let getTogglWorkspacesScope;
+    let _getTogglWorkspacesScope;
     let getTogglProjectsScope;
     let getTogglTimeEntriesScope;
 
@@ -60,7 +60,7 @@ describe("toggl module", () => {
 
     describe("getProjectsIdToNameDict", () => {
         it("gets projects from toggl", async () => {
-            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
+            _getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope();
 
             await testModule.getProjectsIdToNameDict();
@@ -68,7 +68,7 @@ describe("toggl module", () => {
         });
 
         it("converts the returned projects to a dictionary", async () => {
-            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
+            _getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope(200, [
                 { id: 1, name: "project1" },
                 { id: 2, name: "project2" },
@@ -83,7 +83,7 @@ describe("toggl module", () => {
 
     describe("getTimeEntries", () => {
         it("gets time entries from toggl", async () => {
-            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
+            _getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope();
             getTogglTimeEntriesScope = createTogglGetTimeEntriesScope();
 
@@ -92,7 +92,7 @@ describe("toggl module", () => {
         });
 
         it("returns an array with time entries", async () => {
-            getTogglWorkspacesScope = createTogglGetWorkspacesScope();
+            _getTogglWorkspacesScope = createTogglGetWorkspacesScope();
             getTogglProjectsScope = createTogglGetProjectsScope(200, [
                 { id: 11542245, name: "Sonstiges" },
             ]);
