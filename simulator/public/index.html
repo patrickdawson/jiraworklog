@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jira Worklog Simulator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0052cc;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,.2);
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      opacity: .9;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff5630;
+      transition: background .3s;
+    }
+
+    .status-dot.connected { background: #36b37e; }
+
+    .btn-clear {
+      background: #ff5630;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-clear:hover { background: #de350b; }
+    .btn-clear:disabled { background: #97a0af; cursor: default; }
+
+    main {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .meta {
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      color: #6b778c;
+    }
+
+    .table-wrapper {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      background: #f4f5f7;
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      border-bottom: 2px solid #dfe1e6;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #f4f5f7;
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f4f5f7; }
+
+    tbody td {
+      padding: 10px 14px;
+      vertical-align: top;
+    }
+
+    .col-id { color: #6b778c; width: 48px; }
+    .col-issue { font-weight: 600; color: #0052cc; white-space: nowrap; }
+    .col-time { white-space: nowrap; }
+    .col-started { white-space: nowrap; font-family: monospace; font-size: 0.8rem; }
+    .col-comment { max-width: 400px; word-break: break-word; }
+    .col-received { white-space: nowrap; font-family: monospace; font-size: 0.8rem; color: #6b778c; }
+    .col-auth { font-family: monospace; font-size: 0.78rem; color: #6b778c; }
+
+    @keyframes flash {
+      0%   { background: #e3f2fd; }
+      100% { background: transparent; }
+    }
+
+    .new-row { animation: flash 1.5s ease-out; }
+
+    .empty-state {
+      padding: 64px 24px;
+      text-align: center;
+      color: #6b778c;
+    }
+
+    .empty-state p { margin-top: 8px; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Jira Worklog Simulator</h1>
+    <div class="header-right">
+      <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting…</span>
+      </div>
+      <button class="btn-clear" id="btnClear" disabled>Clear All</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="meta" id="meta">0 entries</div>
+    <div class="table-wrapper">
+      <table id="worklogTable">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th>Issue Key</th>
+            <th>Time Spent</th>
+            <th>Started</th>
+            <th>Comment</th>
+            <th>Received At</th>
+            <th>Auth</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr id="emptyRow">
+            <td colspan="7">
+              <div class="empty-state">
+                <strong>No worklogs yet</strong>
+                <p>Submit a worklog from the jiraworklog CLI and it will appear here in real-time.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const tbody = document.getElementById('tableBody');
+    const emptyRow = document.getElementById('emptyRow');
+    const meta = document.getElementById('meta');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const btnClear = document.getElementById('btnClear');
+
+    let count = 0;
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      try {
+        return new Date(iso).toLocaleString();
+      } catch {
+        return iso;
+      }
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function appendRow(entry, animate) {
+      emptyRow.style.display = 'none';
+      const tr = document.createElement('tr');
+      if (animate) tr.classList.add('new-row');
+      tr.innerHTML = `
+        <td class="col-id">${entry.id}</td>
+        <td class="col-issue">${esc(entry.issueKey)}</td>
+        <td class="col-time">${esc(entry.timeSpent)}</td>
+        <td class="col-started">${esc(entry.started)}</td>
+        <td class="col-comment">${esc(entry.comment)}</td>
+        <td class="col-received">${formatDate(entry.receivedAt)}</td>
+        <td class="col-auth">${esc(entry.auth)}</td>
+      `;
+      tbody.appendChild(tr);
+      count++;
+      updateMeta();
+    }
+
+    function clearTable() {
+      tbody.innerHTML = '';
+      tbody.appendChild(emptyRow);
+      emptyRow.style.display = '';
+      count = 0;
+      updateMeta();
+    }
+
+    function updateMeta() {
+      meta.textContent = `${count} entr${count === 1 ? 'y' : 'ies'}`;
+      btnClear.disabled = count === 0;
+    }
+
+    // SSE
+    const evtSource = new EventSource('/events');
+
+    evtSource.addEventListener('init', (e) => {
+      const entries = JSON.parse(e.data);
+      clearTable();
+      entries.forEach(entry => appendRow(entry, false));
+      statusDot.classList.add('connected');
+      statusText.textContent = 'Connected';
+    });
+
+    evtSource.addEventListener('worklog', (e) => {
+      const entry = JSON.parse(e.data);
+      appendRow(entry, true);
+    });
+
+    evtSource.addEventListener('clear', () => {
+      clearTable();
+    });
+
+    evtSource.onerror = () => {
+      statusDot.classList.remove('connected');
+      statusText.textContent = 'Disconnected';
+    };
+
+    // Clear button
+    btnClear.addEventListener('click', () => {
+      if (!confirm('Clear all worklog entries?')) return;
+      fetch('/api/worklogs', { method: 'DELETE' });
+    });
+  </script>
+</body>
+</html>

@@ -1,3 +1,5 @@
+simulator/
+
 # Ignored files
 package-lock.json
 

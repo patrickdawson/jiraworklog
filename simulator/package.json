@@ -1,0 +1,12 @@
+{
+  "name": "jira-worklog-simulator",
+  "version": "1.0.0",
+  "description": "Local Jira API simulator for jiraworklog development",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
