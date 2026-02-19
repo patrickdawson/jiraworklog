@@ -312,6 +312,33 @@ describe("toggl module", () => {
             ]);
         });
 
+        it("converts lowercase project keys to uppercase", () => {
+            const result = testModule.convertToWorkLogEntries([
+                {
+                    description: "Some issue title txr-1234 Message 1",
+                    project: "Jira Task",
+                    duration: 60,
+                },
+                {
+                    description: "Other Issue TXAt-5678",
+                    project: "Jira Task",
+                    duration: 120,
+                },
+            ]);
+            expect(result).toEqual([
+                {
+                    issueKey: "TXR-1234",
+                    durationMin: 1,
+                    description: "Message 1",
+                },
+                {
+                    issueKey: "TXAT-5678",
+                    durationMin: 2,
+                    description: "",
+                },
+            ]);
+        });
+
         it("creates worklog entries for multiple jira projects", () => {
             const result = testModule.convertToWorkLogEntries([
                 {
