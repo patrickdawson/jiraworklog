@@ -1,22 +1,27 @@
 "use strict";
 
-const got = require("got");
-const inquirer = require("inquirer");
-const { jiraUrl } = require("../config.json");
+import got from "got";
+import inquirer from "inquirer";
+import { jiraUrl } from "../config.json";
+import type { AuthDefaults, AuthorizationResult, Credentials } from "./types";
 
-async function checkCredentials({ user, password }) {
+async function checkCredentials({ user, password }: Credentials): Promise<boolean> {
     try {
-        const { body } = await got.get(`${jiraUrl}/rest/api/2/myself`, {
-            username: user,
-            password,
-        });
+        const { body } = await got.get<{ displayName: string }>(
+            `${jiraUrl}/rest/api/2/myself`,
+            {
+                responseType: "json",
+                username: user,
+                password,
+            },
+        );
         console.log(`-> Hello ${body.displayName}. Your credentials are correct.`);
         return true;
-    } catch (err) {
-        // Unauthorized
-        if (err.status === 401) {
+    } catch (err: unknown) {
+        const e = err as { status?: number };
+        if (e.status === 401) {
             return false;
-        } else if (err.status === 403) {
+        } else if (e.status === 403) {
             throw new Error(
                 "Jira rejected your account. Use your browser to login and solve any captcha requests.",
                 { cause: err },
@@ -28,15 +33,15 @@ async function checkCredentials({ user, password }) {
 
 /**
  * Resolves with user and password configuration
- * @param {Object} defaults - The default user and password
- * @returns {Promise<{ user: string, password: string } | string} Resolves with user and password
+ * @param defaults - The default user and password
+ * @returns Resolves with user and password
  */
-const getAuthorization = async (defaults = {}) => {
+export const getAuthorization = async (defaults: AuthDefaults = {}): Promise<AuthorizationResult> => {
     if (defaults.token) {
         return `Bearer ${defaults.token}`;
     }
-    
-    const answers = await inquirer.prompt([
+
+    const answers = await inquirer.prompt<{ user: string; password?: string }>([
         {
             type: "input",
             name: "user",
@@ -46,24 +51,21 @@ const getAuthorization = async (defaults = {}) => {
         {
             type: "password",
             name: "password",
-            message: (answers) => `Passwort für den Benutzer ${answers.user || defaults.user}`,
+            message: (answers: { user?: string }) =>
+                `Passwort für den Benutzer ${answers.user || defaults.user}`,
             when: () => !defaults.password,
         },
     ]);
-    const credentials = {
-        user: answers.user,
-        password: defaults.password || answers.password,
+
+    const credentials: Credentials = {
+        user: answers.user as string,
+        password: (defaults.password || answers.password) as string,
     };
 
-    // re-try if credentials are wrong
     if (!(await checkCredentials(credentials))) {
         console.log("Given username / password was incorrect. Try again.");
         return await getAuthorization(defaults);
     }
 
     return credentials;
-};
-
-module.exports = {
-    getAuthorization,
 };

@@ -1,7 +1,7 @@
-const nock = require("nock");
-const moment = require("moment");
-const testModule = require("../lib/toggl");
-const config = require("../config.json");
+import nock from "nock";
+import moment from "moment";
+import * as testModule from "../lib/toggl";
+import config from "../config.json";
 
 jest.mock("../config.json");
 
@@ -10,7 +10,7 @@ const dateEnd = moment("2022-01-02");
 
 function createTogglGetWorkspacesScope(
     replyStatus = 200,
-    replyValue = [{ name: "Zwick", id: "123" }],
+    replyValue: object | string = [{ name: "Zwick", id: "123" }],
 ) {
     return nock("http://toggl")
         .get("/workspaces")
@@ -18,14 +18,14 @@ function createTogglGetWorkspacesScope(
         .reply(replyStatus, replyValue);
 }
 
-function createTogglGetProjectsScope(replyStatus = 200, replyValue = []) {
+function createTogglGetProjectsScope(replyStatus = 200, replyValue: object | string = []) {
     return nock("http://toggl")
         .get("/workspaces/123/projects")
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);
 }
 
-function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue = []) {
+function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue: object | string = []) {
     return nock("http://toggl")
         .get("/me/time_entries")
         .query({
@@ -37,17 +37,17 @@ function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue = []) {
 }
 
 describe("toggl module", () => {
-    let _getTogglWorkspacesScope;
-    let getTogglProjectsScope;
-    let getTogglTimeEntriesScope;
+    let _getTogglWorkspacesScope: nock.Scope;
+    let getTogglProjectsScope: nock.Scope;
+    let getTogglTimeEntriesScope: nock.Scope;
 
     beforeAll(() => {
-        config.togglUrl = "http://toggl";
-        config.issues = [
+        (config as Record<string, unknown>).togglUrl = "http://toggl";
+        (config as Record<string, unknown>).issues = [
             { name: "Sonstiges", value: "TXR-18227" },
             { name: "Sonderbesprechung", value: "TXR-18224" },
         ];
-        config.jiraProjectKeys = ["TXR", "TXAT"];
+        (config as Record<string, unknown>).jiraProjectKeys = ["TXR", "TXAT"];
     });
 
     beforeEach(() => {

@@ -1,6 +1,8 @@
-require("dotenv").config({ quiet: true });
-require("dotenv").config({ path: ".env.local", override: true, quiet: true });
+import dotenv from "dotenv";
 
-const { run } = require("./lib/run");
+dotenv.config({ quiet: true } as Parameters<typeof dotenv.config>[0]);
+dotenv.config({ path: ".env.local", override: true, quiet: true } as Parameters<typeof dotenv.config>[0]);
+
+import { run } from "./lib/run";
 
 run();

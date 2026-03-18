@@ -2,14 +2,22 @@
     "name": "jirabooking",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "app.ts",
     "scripts": {
+        "start": "ts-node app.ts",
         "test": "jest",
         "test:dev": "jest --watch",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "prettier": "prettier --check **/*.{js,json}",
-        "prettier:write": "prettier --write **/*.{js,json}"
+        "prettier": "prettier --check **/*.{ts,js,json}",
+        "prettier:write": "prettier --write **/*.{ts,js,json}"
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "testEnvironment": "node",
+        "testMatch": [
+            "**/test/**/*.spec.ts"
+        ]
     },
     "keywords": [],
     "author": "",
@@ -27,12 +35,22 @@
     },
     "devDependencies": {
         "@eslint/js": "10.0.1",
+        "@types/inquirer": "9.0.9",
+        "@types/jest": "27.5.2",
+        "@types/lodash": "4.17.24",
+        "@types/nock": "10.0.3",
+        "@types/node": "25.5.0",
+        "@typescript-eslint/eslint-plugin": "8.57.1",
+        "@typescript-eslint/parser": "8.57.1",
         "eslint": "10.0.0",
         "eslint-config-prettier": "10.1.8",
         "globals": "17.3.0",
         "inquirer-test": "2.0.1",
         "jest": "27.5.1",
         "nock": "13.2.4",
-        "prettier": "2.6.2"
+        "prettier": "2.6.2",
+        "ts-jest": "27.1.5",
+        "ts-node": "10.9.2",
+        "typescript": "5.9.3"
     }
 }

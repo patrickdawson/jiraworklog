@@ -1,45 +1,49 @@
-const _ = require("lodash");
-const inquirer = require("inquirer");
-const moment = require("moment");
-const got = require("got");
-const Conf = require("conf");
-const fuzzy = require("fuzzy");
-const { table } = require("table");
+import _ from "lodash";
+import inquirer from "inquirer";
+import moment from "moment";
+import got from "got";
+import Conf from "conf";
+import fuzzy from "fuzzy";
+import { table } from "table";
 
-const { getAuthorization } = require("./auth");
-const { getTimeEntries, convertToWorkLogEntries } = require("./toggl");
-const config = require("../config");
-
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-const configstore = new Conf();
-moment.locale("de");
+import { getAuthorization } from "./auth";
+import { getTimeEntries, convertToWorkLogEntries } from "./toggl";
+import config from "../config.json";
+import type { AuthorizationResult, PostToJiraOptions } from "./types";
 
 inquirer.registerPrompt("autocomplete", require("inquirer-autocomplete-prompt"));
 
-const expandIssue = (value) => (/^[0-9].*/.test(value) ? `TXR-${value}` : value);
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+
+interface ConfStore {
+    lastIssues?: string[];
+    user?: string;
+}
+
+const configstore = new Conf<ConfStore>();
+moment.locale("de");
+
+const expandIssue = (value: string): string =>
+    /^[0-9].*/.test(value) ? `TXR-${value}` : value;
 
 /**
  * Returns the last issues.
- * @returns {string[]} Returns the last issues.
  */
-const getLastIssues = () => configstore.get("lastIssues") || [];
+const getLastIssues = (): string[] => (configstore.get("lastIssues") as string[] | undefined) || [];
 
 /**
  * Get all issues including the last issues
- * @param {boolean} [getKeys] Optional flag to get Issue keys instead of issue names for issues from configuration.
- * @return {string[]} All issue names as string array
+ * @param getKeys - Optional flag to get Issue keys instead of issue names for issues from configuration.
  */
-const getAllIssues = (getKeys) => [
+const getAllIssues = (getKeys?: boolean): string[] => [
     ...getLastIssues(),
     ..._.map(config.issues, (i) => (getKeys ? i.value : i.name)),
 ];
 
 /**
  * Get issue key by searching for its name.
- * @param {string} name Name of issue to search for key.
- * @return {string} Key of issue.
  */
-const getIssueKeyByName = (name) => {
+export const getIssueKeyByName = (name: string): string => {
     const issue = _.find(config.issues, ["name", name]);
     if (!_.isNil(issue)) {
         return issue.value;
@@ -49,13 +53,10 @@ const getIssueKeyByName = (name) => {
 
 /**
  * Search function for inquirer autocomplete prompt.
- * @param {Object} answersSoFar - Not used.
- * @param {string} input - User input.
- * @return {Promise<Array>}
  */
-const searchKnownIssues = async (answersSoFar, input) => {
+const searchKnownIssues = async (_answersSoFar: unknown, input: string): Promise<string[]> => {
     input = input || "";
-    let fuzzyResult = fuzzy.filter(input, getAllIssues());
+    const fuzzyResult = fuzzy.filter(input, getAllIssues());
     const values = _.map(fuzzyResult, (result) => result.original);
     if (input && !_.includes(values, expandIssue(input))) {
         return [...values, input];
@@ -63,17 +64,16 @@ const searchKnownIssues = async (answersSoFar, input) => {
     return values;
 };
 
-const getDateToBook = async () => {
-    const dateToObject = (date) => ({ date, text: date.format("dddd[,] LL") });
-    const createDayIndices = (count) => [...Array(count).keys()];
-    const dayIndexToDateObjMapper = (i) => dateToObject(moment().subtract(i, "day"));
+const getDateToBook = async (): Promise<moment.Moment> => {
+    const dateToObject = (date: moment.Moment) => ({ date, text: date.format("dddd[,] LL") });
+    const createDayIndices = (count: number) => [...Array(count).keys()];
+    const dayIndexToDateObjMapper = (i: number) => dateToObject(moment().subtract(i, "day"));
 
-    const lastDays = createDayIndices(config.maxLastDays || 10)
-        .map(dayIndexToDateObjMapper);
+    const lastDays = createDayIndices(config.maxLastDays || 10).map(dayIndexToDateObjMapper);
 
     const lastWorkdayIdx = moment().weekday() === 0 ? 3 : 1;
 
-    const answers = await inquirer.prompt([
+    const answers = await inquirer.prompt<{ dayToBook: string }>([
         {
             type: "list",
             name: "dayToBook",
@@ -82,7 +82,7 @@ const getDateToBook = async () => {
             default: lastWorkdayIdx,
         },
     ]);
-    const selectedDate = _.find(lastDays, ["text", answers.dayToBook]).date;
+    const selectedDate = _.find(lastDays, ["text", answers.dayToBook])!.date;
 
     console.log(`Sie buchen auf ${selectedDate.format("dddd[,] LL")}`);
 
@@ -91,29 +91,28 @@ const getDateToBook = async () => {
 
 /**
  * Adds given issue to lastIssues cache.
- * @param {string} issue - The issue to add
  */
-const addToLastIssues = (issue) => {
+const addToLastIssues = (issue: string): void => {
     let lastIssues = getLastIssues();
-    // remove entry if it is already existing
     const idx = lastIssues.findIndex((v) => v === issue);
     if (idx >= 0) {
         lastIssues.splice(idx, 1);
     }
-    // add issue as first element in list
     lastIssues.unshift(issue);
-    // trim list to maxLastIssues
     if (lastIssues.length > config.maxLastIssues) {
         lastIssues.splice(config.maxLastIssues);
     }
-    // save lastIssues
     configstore.set(
         "lastIssues",
         lastIssues.filter((v) => !!v),
     );
 };
 
-async function postToJira({ issueKey, timeSpent, message }, dateToBook, authorization) {
+async function postToJira(
+    { issueKey, timeSpent, message }: PostToJiraOptions,
+    dateToBook: moment.Moment,
+    authorization: AuthorizationResult,
+): Promise<void> {
     const issue = issueKey;
     const postData = {
         timeSpent,
@@ -135,19 +134,26 @@ async function postToJira({ issueKey, timeSpent, message }, dateToBook, authoriz
             json: postData,
             ...authObject,
         });
-    } catch (err) {
-        console.error(`Failed to add worklog: Reason: ${err.message}`);
+    } catch (err: unknown) {
+        console.error(`Failed to add worklog: Reason: ${(err as Error).message}`);
     }
 }
 
-const addWorklog = async (authorization, dateToBook) => {
-    let answers = await inquirer.prompt([
+export const addWorklog = async (
+    authorization: AuthorizationResult,
+    dateToBook: moment.Moment,
+): Promise<void> => {
+    let answers = await inquirer.prompt<{
+        issueSelection: string;
+        time: string;
+        message: string;
+    }>([
         {
             type: "autocomplete",
             name: "issueSelection",
             message: "Welchen Issue willst du buchen",
             source: searchKnownIssues,
-            filter: (value) => {
+            filter: (value: string) => {
                 const issueFromConfig = _.find(config.issues, ["name", value]);
                 return issueFromConfig ? issueFromConfig.value : expandIssue(value);
             },
@@ -161,14 +167,16 @@ const addWorklog = async (authorization, dateToBook) => {
             type: "input",
             name: "message",
             message: "Buchungstext (optional)",
-            when: (answers) => answers.issueSelection !== getIssueKeyByName("Sonstiges"),
+            when: (answers: { issueSelection?: string }) =>
+                answers.issueSelection !== getIssueKeyByName("Sonstiges"),
         },
         {
             type: "input",
             name: "message",
             message: "Buchungstext",
             default: "Emails/Confluence/Buchen",
-            when: (answers) => answers.issueSelection === getIssueKeyByName("Sonstiges"),
+            when: (answers: { issueSelection?: string }) =>
+                answers.issueSelection === getIssueKeyByName("Sonstiges"),
         },
     ]);
 
@@ -188,7 +196,7 @@ const addWorklog = async (authorization, dateToBook) => {
         authorization,
     );
 
-    answers = await inquirer.prompt([
+    answers = await inquirer.prompt<{ issueSelection: string; time: string; message: string }>([
         {
             type: "confirm",
             name: "continue",
@@ -196,12 +204,15 @@ const addWorklog = async (authorization, dateToBook) => {
         },
     ]);
 
-    if (answers.continue) {
+    if ((answers as unknown as { continue: boolean }).continue) {
         await addWorklog(authorization, dateToBook);
     }
 };
 
-async function importToggl(authorization, dateToBook) {
+async function importToggl(
+    authorization: AuthorizationResult,
+    dateToBook: moment.Moment,
+): Promise<void> {
     const timeEntries = await getTimeEntries(dateToBook);
     const workLogEntries = convertToWorkLogEntries(timeEntries);
     const invalidWorkLogEntries = _.remove(workLogEntries, (w) => w.issueKey === "undefined");
@@ -211,26 +222,24 @@ async function importToggl(authorization, dateToBook) {
         return [entry.issueKey, project, entry.durationMin, entry.description];
     });
 
-    // log each workLogEntry
     console.log("\nThe following entries will be logged to Jira:");
     console.log(table([["Project", "Issue", "Duration (min)", "Message"], ...tableContent]));
 
-    // Log workLogEntries with undefined issueKeys
     if (invalidWorkLogEntries.length > 0) {
         const invalidTableContent = _.map(invalidWorkLogEntries, (entry) => {
             const project = "Custom";
             return [entry.issueKey, project, entry.durationMin, entry.description];
         });
 
-        // log every invalid workLogEntry
         console.log("Won't log the following entries to Jira:");
-        console.log(table([["Project", "Issue", "Duration (min)", "Message"], ...invalidTableContent]));
-
+        console.log(
+            table([["Project", "Issue", "Duration (min)", "Message"], ...invalidTableContent]),
+        );
     }
     const durationSum = _.sumBy(workLogEntries, "durationMin");
     console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
 
-    const answers = await inquirer.prompt([
+    const answers = await inquirer.prompt<{ sendToJira: boolean }>([
         {
             type: "confirm",
             name: "sendToJira",
@@ -252,11 +261,11 @@ async function importToggl(authorization, dateToBook) {
     }
 }
 
-const run = async () => {
+export const run = async (): Promise<void> => {
     try {
         console.log("\nWilkommen beim JIRA worklog tool.");
         const authorization = await getAuthorization({
-            user: configstore.get("user"),
+            user: configstore.get("user") as string | undefined,
             password: process.env["JIRA_PASS"],
             token: process.env["JIRA_TOKEN"],
         });
@@ -266,7 +275,7 @@ const run = async () => {
 
         const dateToBook = await getDateToBook();
 
-        const answers = await inquirer.prompt([
+        const answers = await inquirer.prompt<{ toggl: boolean }>([
             {
                 type: "confirm",
                 name: "toggl",
@@ -282,10 +291,4 @@ const run = async () => {
     } catch (error) {
         console.error(error);
     }
-};
-
-module.exports = {
-    run,
-    getIssueKeyByName,
-    addWorklog,
 };
