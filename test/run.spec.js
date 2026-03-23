@@ -30,14 +30,6 @@ describe("run test", () => {
     });
 
     beforeEach(() => {
-        jest.useFakeTimers("legacy");
-    });
-
-    afterEach(() => {
-        jest.useRealTimers();
-    });
-
-    beforeEach(() => {
         auth.getAuthorization.mockResolvedValue({ user: "user1" });
 
         dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
