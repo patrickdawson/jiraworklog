@@ -1,6 +1,6 @@
 import nock from "nock";
 import moment from "moment";
-import * as testModule from "../lib/toggl";
+import * as testModule from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
 
 const config = vi.hoisted(

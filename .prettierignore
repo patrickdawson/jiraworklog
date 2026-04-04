@@ -2,6 +2,7 @@
 package-lock.json
 
 # Ignored directories
+dist
 node_modules
 doc
 plugins

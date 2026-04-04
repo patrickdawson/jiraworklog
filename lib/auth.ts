@@ -1,7 +1,7 @@
 import got, { HTTPError } from "got";
 import inquirer from "inquirer";
-import { jiraUrl } from "../config.json";
-import type { Authorization, AuthDefaults } from "./types";
+import config from "../config.json" with { type: "json" };
+import type { Authorization, AuthDefaults } from "./types.js";
 
 async function checkCredentials({
     user,
@@ -11,11 +11,14 @@ async function checkCredentials({
     password: string;
 }): Promise<boolean> {
     try {
-        const { body } = await got.get<{ displayName: string }>(`${jiraUrl}/rest/api/2/myself`, {
-            responseType: "json",
-            username: user,
-            password,
-        });
+        const { body } = await got.get<{ displayName: string }>(
+            `${config.jiraUrl}/rest/api/2/myself`,
+            {
+                responseType: "json",
+                username: user,
+                password,
+            },
+        );
         console.log(`-> Hello ${body.displayName}. Your credentials are correct.`);
         return true;
     } catch (err) {

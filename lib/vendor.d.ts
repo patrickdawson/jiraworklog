@@ -1,4 +1,5 @@
 declare module "inquirer-autocomplete-prompt" {
-    const plugin: unknown;
-    export = plugin;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plugin: any;
+    export default plugin;
 }

@@ -6,13 +6,11 @@ import got from "got";
 import Conf from "conf";
 import fuzzy from "fuzzy";
 import { table } from "table";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const autocompletePrompt = require("inquirer-autocomplete-prompt");
-import { getAuthorization } from "./auth";
-import { getTimeEntries, convertToWorkLogEntries } from "./toggl";
-import config from "../config.json";
-import type { Authorization, ConfSchema, WorkLogEntry } from "./types";
+import autocompletePrompt from "inquirer-autocomplete-prompt";
+import { getAuthorization } from "./auth.js";
+import { getTimeEntries, convertToWorkLogEntries } from "./toggl.js";
+import config from "../config.json" with { type: "json" };
+import type { Authorization, ConfSchema, WorkLogEntry } from "./types.js";
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 const configstore = new Conf<ConfSchema>();

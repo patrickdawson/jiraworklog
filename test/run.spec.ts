@@ -2,9 +2,9 @@ import nock from "nock";
 import moment from "moment";
 import inquirer from "inquirer";
 import Conf from "conf";
-import * as testModule from "../lib/run";
-import * as auth from "../lib/auth";
-import * as toggl from "../lib/toggl";
+import * as testModule from "../lib/run.js";
+import * as auth from "../lib/auth.js";
+import * as toggl from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
 
 moment.locale("de");

@@ -1,7 +1,7 @@
 import _ from "lodash";
 import got from "got";
 import type { Moment } from "moment";
-import config from "../config.json";
+import config from "../config.json" with { type: "json" };
 import type {
     TogglApiTimeEntry,
     TogglProject,
@@ -9,7 +9,7 @@ import type {
     TogglTimeEntry,
     WorkLogEntry,
     ProjectIdToNameDict,
-} from "./types";
+} from "./types.js";
 
 const password = "api_token";
 
