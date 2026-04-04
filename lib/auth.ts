@@ -1,26 +1,37 @@
-"use strict";
+import got, { HTTPError } from "got";
+import inquirer from "inquirer";
+import { jiraUrl } from "../config.json";
+import type { Authorization, AuthDefaults } from "./types";
 
-const got = require("got");
-const inquirer = require("inquirer");
-const { jiraUrl } = require("../config.json");
-
-async function checkCredentials({ user, password }) {
+async function checkCredentials({
+    user,
+    password,
+}: {
+    user: string;
+    password: string;
+}): Promise<boolean> {
     try {
-        const { body } = await got.get(`${jiraUrl}/rest/api/2/myself`, {
-            username: user,
-            password,
-        });
+        const { body } = await got.get<{ displayName: string }>(
+            `${jiraUrl}/rest/api/2/myself`,
+            {
+                responseType: "json",
+                username: user,
+                password,
+            },
+        );
         console.log(`-> Hello ${body.displayName}. Your credentials are correct.`);
         return true;
     } catch (err) {
-        // Unauthorized
-        if (err.status === 401) {
-            return false;
-        } else if (err.status === 403) {
-            throw new Error(
-                "Jira rejected your account. Use your browser to login and solve any captcha requests.",
-                { cause: err },
-            );
+        if (err instanceof HTTPError) {
+            // Unauthorized
+            if (err.response.statusCode === 401) {
+                return false;
+            } else if (err.response.statusCode === 403) {
+                throw new Error(
+                    "Jira rejected your account. Use your browser to login and solve any captcha requests.",
+                    { cause: err },
+                );
+            }
         }
         throw err;
     }
@@ -28,10 +39,10 @@ async function checkCredentials({ user, password }) {
 
 /**
  * Resolves with user and password configuration
- * @param {Object} defaults - The default user and password
- * @returns {Promise<{ user: string, password: string } | string} Resolves with user and password
+ * @param defaults - The default user and password
+ * @returns Resolves with user and password or a Bearer token string
  */
-const getAuthorization = async (defaults = {}) => {
+const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorization> => {
     if (defaults.token) {
         return `Bearer ${defaults.token}`;
     }
@@ -46,13 +57,14 @@ const getAuthorization = async (defaults = {}) => {
         {
             type: "password",
             name: "password",
-            message: (answers) => `Passwort für den Benutzer ${answers.user || defaults.user}`,
+            message: (a: Record<string, unknown>) =>
+                `Passwort für den Benutzer ${(a.user as string) || defaults.user}`,
             when: () => !defaults.password,
         },
     ]);
     const credentials = {
-        user: answers.user,
-        password: defaults.password || answers.password,
+        user: answers.user as string,
+        password: (defaults.password || (answers.password as string)) as string,
     };
 
     // re-try if credentials are wrong
@@ -64,6 +76,4 @@ const getAuthorization = async (defaults = {}) => {
     return credentials;
 };
 
-module.exports = {
-    getAuthorization,
-};
+export { getAuthorization };

@@ -1,16 +1,26 @@
-const nock = require("nock");
-const moment = require("moment");
-const testModule = require("../lib/toggl");
-const config = require("../config.json");
+import nock from "nock";
+import moment from "moment";
+import * as testModule from "../lib/toggl";
+import type { AppConfig } from "../lib/types";
 
-jest.mock("../config.json");
+jest.mock("../config.json", () => ({
+    togglUrl: "",
+    issues: [],
+    maxLastIssues: 10,
+    maxLastDays: 30,
+    jiraProjectKeys: [],
+    jiraUrl: "",
+    togglWorkspace: "",
+}));
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const config = require("../config.json") as AppConfig;
 
 const dateStart = moment("2022-01-01");
-const dateEnd = moment("2022-01-02");
 
 function createTogglGetWorkspacesScope(
     replyStatus = 200,
-    replyValue = [{ name: "Zwick", id: "123" }],
+    replyValue: unknown = [{ name: "Zwick", id: "123" }],
 ) {
     return nock("http://toggl")
         .get("/workspaces")
@@ -18,31 +28,32 @@ function createTogglGetWorkspacesScope(
         .reply(replyStatus, replyValue);
 }
 
-function createTogglGetProjectsScope(replyStatus = 200, replyValue = []) {
+function createTogglGetProjectsScope(replyStatus = 200, replyValue: unknown = []) {
     return nock("http://toggl")
         .get("/workspaces/123/projects")
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);
 }
 
-function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue = []) {
+function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue: unknown = []) {
     return nock("http://toggl")
         .get("/me/time_entries")
         .query({
             start_date: dateStart.format("YYYY-MM-DD"),
-            end_date: dateEnd.format("YYYY-MM-DD"),
+            end_date: dateStart.clone().add(1, "day").format("YYYY-MM-DD"),
         })
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);
 }
 
 describe("toggl module", () => {
-    let _getTogglWorkspacesScope;
-    let getTogglProjectsScope;
-    let getTogglTimeEntriesScope;
+    let _getTogglWorkspacesScope: nock.Scope;
+    let getTogglProjectsScope: nock.Scope;
+    let getTogglTimeEntriesScope: nock.Scope;
 
     beforeAll(() => {
         config.togglUrl = "http://toggl";
+        config.togglWorkspace = "Zwick";
         config.issues = [
             { name: "Sonstiges", value: "TXR-18227" },
             { name: "Sonderbesprechung", value: "TXR-18224" },

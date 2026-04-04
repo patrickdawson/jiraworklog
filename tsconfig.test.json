@@ -1,0 +1,8 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist-test",
+        "isolatedModules": true
+    },
+    "include": ["app.ts", "lib/**/*.ts", "test/**/*.ts"]
+}
