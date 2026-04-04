@@ -11,14 +11,11 @@ async function checkCredentials({
     password: string;
 }): Promise<boolean> {
     try {
-        const { body } = await got.get<{ displayName: string }>(
-            `${jiraUrl}/rest/api/2/myself`,
-            {
-                responseType: "json",
-                username: user,
-                password,
-            },
-        );
+        const { body } = await got.get<{ displayName: string }>(`${jiraUrl}/rest/api/2/myself`, {
+            responseType: "json",
+            username: user,
+            password,
+        });
         console.log(`-> Hello ${body.displayName}. Your credentials are correct.`);
         return true;
     } catch (err) {

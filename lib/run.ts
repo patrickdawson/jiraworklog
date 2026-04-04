@@ -20,8 +20,7 @@ moment.locale("de");
 
 inquirer.registerPrompt("autocomplete", autocompletePrompt);
 
-const expandIssue = (value: string): string =>
-    /^[0-9].*/.test(value) ? `TXR-${value}` : value;
+const expandIssue = (value: string): string => (/^[0-9].*/.test(value) ? `TXR-${value}` : value);
 
 /**
  * Returns the last issues.
@@ -214,7 +213,10 @@ const addWorklog = async (authorization: Authorization, dateToBook: Moment): Pro
 async function importToggl(authorization: Authorization, dateToBook: Moment): Promise<void> {
     const timeEntries = await getTimeEntries(dateToBook);
     const workLogEntries = convertToWorkLogEntries(timeEntries);
-    const invalidWorkLogEntries = _.remove(workLogEntries, (w: WorkLogEntry) => w.issueKey === "undefined");
+    const invalidWorkLogEntries = _.remove(
+        workLogEntries,
+        (w: WorkLogEntry) => w.issueKey === "undefined",
+    );
     const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
     const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
         const project = issueKeyToProject[entry.issueKey] || "Custom";

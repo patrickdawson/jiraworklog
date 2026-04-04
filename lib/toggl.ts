@@ -17,14 +17,11 @@ const createDescription = (collection: object[], key: string): string =>
     _.flow([_.map, _.uniq, _.compact, _.partialRight(_.join, ", ")])(collection, key) as string;
 
 async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
-    const workspacesResponse = await got.get<TogglWorkspace[]>(
-        `${config.togglUrl}/workspaces`,
-        {
-            responseType: "json",
-            username: process.env.TOGGL_API_TOKEN,
-            password,
-        },
-    );
+    const workspacesResponse = await got.get<TogglWorkspace[]>(`${config.togglUrl}/workspaces`, {
+        responseType: "json",
+        username: process.env.TOGGL_API_TOKEN,
+        password,
+    });
 
     const workspaceId = _.find(workspacesResponse.body, ["name", config.togglWorkspace])?.id;
     if (!workspaceId) {
@@ -58,18 +55,15 @@ async function getTimeEntries(dateToBook: Moment): Promise<TogglTimeEntry[]> {
     const toTogglDate = (date: Moment) => date.format("YYYY-MM-DD");
     const toggleDateStart = toTogglDate(dataToBookCopy);
     const toggleDateEnd = toTogglDate(dataToBookCopy.add(1, "day"));
-    const { body } = await got.get<TogglApiTimeEntry[]>(
-        `${config.togglUrl}/me/time_entries`,
-        {
-            responseType: "json",
-            username: process.env.TOGGL_API_TOKEN,
-            password,
-            searchParams: {
-                start_date: toggleDateStart,
-                end_date: toggleDateEnd,
-            },
+    const { body } = await got.get<TogglApiTimeEntry[]>(`${config.togglUrl}/me/time_entries`, {
+        responseType: "json",
+        username: process.env.TOGGL_API_TOKEN,
+        password,
+        searchParams: {
+            start_date: toggleDateStart,
+            end_date: toggleDateEnd,
         },
-    );
+    });
     return _.map(body, (entry: TogglApiTimeEntry) => ({
         description: entry.description,
         project: entry.project_id !== null ? dict[entry.project_id] : undefined,

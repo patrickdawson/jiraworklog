@@ -60,9 +60,7 @@ describe("run test", () => {
             continue: false,
         });
 
-        postScope = nock("http://jira")
-            .post("/rest/api/latest/issue/TXR-1234/worklog")
-            .reply(200);
+        postScope = nock("http://jira").post("/rest/api/latest/issue/TXR-1234/worklog").reply(200);
     });
 
     afterEach(() => {
@@ -85,10 +83,7 @@ describe("run test", () => {
         it("sets returned user of getCredentials into configstore", async () => {
             jest.mocked(auth.getAuthorization).mockResolvedValue({ user: "newUser" });
             await testModule.run();
-            expect(jest.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith(
-                "user",
-                "newUser",
-            );
+            expect(jest.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
         });
     });
 
