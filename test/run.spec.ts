@@ -9,26 +9,28 @@ import type { AppConfig } from "../lib/types";
 
 moment.locale("de");
 
-jest.mock("inquirer");
-jest.mock("conf");
-jest.mock("../lib/auth");
-jest.mock("../lib/toggl");
-jest.mock("../config.json", () => ({
-    jiraUrl: "",
-    issues: [],
-    maxLastIssues: 10,
-    maxLastDays: 30,
-    jiraProjectKeys: [],
-    togglUrl: "",
-    togglWorkspace: "",
-}));
+vi.mock("inquirer");
+vi.mock("conf");
+vi.mock("../lib/auth");
+vi.mock("../lib/toggl");
+const config = vi.hoisted(
+    () =>
+        ({
+            jiraUrl: "",
+            issues: [],
+            maxLastIssues: 10,
+            maxLastDays: 30,
+            jiraProjectKeys: [],
+            togglUrl: "",
+            togglWorkspace: "",
+        }) as AppConfig,
+);
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const config = require("../config.json") as AppConfig;
+vi.mock("../config.json", () => ({ default: config }));
 
-const consoleLogMock = jest.fn();
+const consoleLogMock = vi.fn();
 global.console.log = consoleLogMock;
-const consoleErrorMock = jest.fn();
+const consoleErrorMock = vi.fn();
 global.console.error = consoleErrorMock;
 
 describe("run test", () => {
@@ -41,22 +43,22 @@ describe("run test", () => {
     });
 
     beforeEach(() => {
-        jest.mocked(auth.getAuthorization).mockResolvedValue({ user: "user1" });
+        vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "user1" });
 
         dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
 
-        jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
             dayToBook: dayToBook.format("dddd[,] LL"),
         });
-        jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
             toggl: false,
         });
-        jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
             issueSelection: "TXR-1234",
             time: "1d",
             message: "message to book",
         });
-        jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
             continue: false,
         });
 
@@ -65,7 +67,7 @@ describe("run test", () => {
 
     afterEach(() => {
         nock.cleanAll();
-        jest.mocked(inquirer.prompt).mockReset();
+        vi.mocked(inquirer.prompt).mockReset();
         consoleLogMock.mockClear();
         consoleErrorMock.mockClear();
     });
@@ -81,9 +83,9 @@ describe("run test", () => {
 
     describe("auth", () => {
         it("sets returned user of getCredentials into configstore", async () => {
-            jest.mocked(auth.getAuthorization).mockResolvedValue({ user: "newUser" });
+            vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "newUser" });
             await testModule.run();
-            expect(jest.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
+            expect(vi.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
         });
     });
 
@@ -109,17 +111,17 @@ describe("run test", () => {
 
         describe("toggl mode", () => {
             beforeEach(() => {
-                jest.mocked(inquirer.prompt).mockReset();
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+                vi.mocked(inquirer.prompt).mockReset();
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({
                     dayToBook: dayToBook.format("dddd[,] LL"),
                 });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: true });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
-                jest.mocked(toggl.getTimeEntries).mockResolvedValue([
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: true });
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
+                vi.mocked(toggl.getTimeEntries).mockResolvedValue([
                     { project: "Sonstiges", duration: 60, description: "Foo" },
                 ]);
-                jest.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
+                vi.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
                     { issueKey: "TXR-1234", durationMin: 1, description: "Foo" },
                 ]);
             });
@@ -132,13 +134,13 @@ describe("run test", () => {
             });
 
             it("does not post worklog to jira if sendToJira is false", async () => {
-                jest.mocked(inquirer.prompt).mockReset();
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({
+                vi.mocked(inquirer.prompt).mockReset();
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({
                     dayToBook: dayToBook.format("dddd[,] LL"),
                 });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: false });
-                jest.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: false });
+                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
 
                 await testModule.run();
 
@@ -147,7 +149,7 @@ describe("run test", () => {
             });
 
             it("does not post worklog to jira if an issueKey is undefined", async () => {
-                jest.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
+                vi.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
                     { issueKey: "undefined", durationMin: 1, description: "Foo" },
                 ]);
 
@@ -157,7 +159,7 @@ describe("run test", () => {
             });
 
             it("does only post valid worklog entries to jira", async () => {
-                jest.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
+                vi.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
                     { issueKey: "TXR-1234", durationMin: 1, description: "Foo" },
                     { issueKey: "undefined", durationMin: 2, description: "Bar" },
                 ]);

@@ -2,7 +2,8 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "./dist-test",
-        "isolatedModules": true
+        "isolatedModules": true,
+        "types": ["vitest/globals"]
     },
     "include": ["app.ts", "lib/**/*.ts", "test/**/*.ts"]
 }

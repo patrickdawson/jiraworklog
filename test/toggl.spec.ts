@@ -3,18 +3,20 @@ import moment from "moment";
 import * as testModule from "../lib/toggl";
 import type { AppConfig } from "../lib/types";
 
-jest.mock("../config.json", () => ({
-    togglUrl: "",
-    issues: [],
-    maxLastIssues: 10,
-    maxLastDays: 30,
-    jiraProjectKeys: [],
-    jiraUrl: "",
-    togglWorkspace: "",
-}));
+const config = vi.hoisted(
+    () =>
+        ({
+            togglUrl: "",
+            issues: [],
+            maxLastIssues: 10,
+            maxLastDays: 30,
+            jiraProjectKeys: [],
+            jiraUrl: "",
+            togglWorkspace: "",
+        }) as AppConfig,
+);
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const config = require("../config.json") as AppConfig;
+vi.mock("../config.json", () => ({ default: config }));
 
 const dateStart = moment("2022-01-01");
 

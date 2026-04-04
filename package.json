@@ -6,8 +6,8 @@
     "scripts": {
         "build": "tsc",
         "typecheck": "tsc --noEmit",
-        "test": "jest",
-        "test:dev": "jest --watch",
+        "test": "vitest run",
+        "test:dev": "vitest",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "prettier": "prettier --check **/*.{ts,js,json}",
@@ -30,17 +30,15 @@
     "devDependencies": {
         "@eslint/js": "10.0.1",
         "@types/inquirer": "9.0.7",
-        "@types/jest": "30.0.0",
         "@types/lodash": "4.17.20",
         "@types/node": "22.19.17",
         "eslint": "10.0.0",
         "eslint-config-prettier": "10.1.8",
         "globals": "17.3.0",
         "inquirer-test": "2.0.1",
-        "jest": "30.3.0",
+        "vitest": "4.1.2",
         "nock": "13.2.4",
         "prettier": "2.6.2",
-        "ts-jest": "29.4.9",
         "typescript": "6.0.2",
         "typescript-eslint": "8.58.0"
     }
