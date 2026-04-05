@@ -1,5 +1,5 @@
 import _ from "lodash";
-import got from "got";
+import axios from "axios";
 import type { Moment } from "moment";
 import config from "../config.json" with { type: "json" };
 import type {
@@ -17,25 +17,24 @@ const createDescription = (collection: object[], key: string): string =>
     _.flow([_.map, _.uniq, _.compact, _.partialRight(_.join, ", ")])(collection, key) as string;
 
 async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
-    const workspacesResponse = await got.get<TogglWorkspace[]>(`${config.togglUrl}/workspaces`, {
-        responseType: "json",
-        username: process.env.TOGGL_API_TOKEN,
-        password,
-    });
+    const { data: workspacesData } = await axios.get<TogglWorkspace[]>(
+        `${config.togglUrl}/workspaces`,
+        {
+            auth: { username: process.env.TOGGL_API_TOKEN!, password },
+        },
+    );
 
-    const workspaceId = _.find(workspacesResponse.body, ["name", config.togglWorkspace])?.id;
+    const workspaceId = _.find(workspacesData, ["name", config.togglWorkspace])?.id;
     if (!workspaceId) {
         throw new Error(
             `Workspace id for workspace ${config.togglWorkspace} not found. Please check your config!`,
         );
     }
 
-    const { body } = await got.get<TogglProject[]>(
+    const { data: body } = await axios.get<TogglProject[]>(
         `${config.togglUrl}/workspaces/${workspaceId}/projects`,
         {
-            responseType: "json",
-            username: process.env.TOGGL_API_TOKEN,
-            password,
+            auth: { username: process.env.TOGGL_API_TOKEN!, password },
         },
     );
     return _.reduce(
@@ -55,15 +54,16 @@ async function getTimeEntries(dateToBook: Moment): Promise<TogglTimeEntry[]> {
     const toTogglDate = (date: Moment) => date.format("YYYY-MM-DD");
     const toggleDateStart = toTogglDate(dataToBookCopy);
     const toggleDateEnd = toTogglDate(dataToBookCopy.add(1, "day"));
-    const { body } = await got.get<TogglApiTimeEntry[]>(`${config.togglUrl}/me/time_entries`, {
-        responseType: "json",
-        username: process.env.TOGGL_API_TOKEN,
-        password,
-        searchParams: {
-            start_date: toggleDateStart,
-            end_date: toggleDateEnd,
+    const { data: body } = await axios.get<TogglApiTimeEntry[]>(
+        `${config.togglUrl}/me/time_entries`,
+        {
+            auth: { username: process.env.TOGGL_API_TOKEN!, password },
+            params: {
+                start_date: toggleDateStart,
+                end_date: toggleDateEnd,
+            },
         },
-    });
+    );
     return _.map(body, (entry: TogglApiTimeEntry) => ({
         description: entry.description,
         project: entry.project_id !== null ? dict[entry.project_id] : undefined,
