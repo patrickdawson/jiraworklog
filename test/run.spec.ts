@@ -6,6 +6,7 @@ import * as testModule from "../lib/run.js";
 import * as auth from "../lib/auth.js";
 import * as toggl from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
+import { createMockConfig } from "./helpers.js";
 
 moment.locale("de");
 
@@ -13,18 +14,7 @@ vi.mock("inquirer");
 vi.mock("conf");
 vi.mock("../lib/auth");
 vi.mock("../lib/toggl");
-const config = vi.hoisted(
-    () =>
-        ({
-            jiraUrl: "",
-            issues: [],
-            maxLastIssues: 10,
-            maxLastDays: 30,
-            jiraProjectKeys: [],
-            togglUrl: "",
-            togglWorkspace: "",
-        }) as AppConfig,
-);
+const config = vi.hoisted(() => ({}) as AppConfig);
 
 vi.mock("../config.json", () => ({ default: config }));
 
@@ -38,8 +28,10 @@ describe("run test", () => {
     let dayToBook: moment.Moment;
 
     beforeAll(() => {
-        config.jiraUrl = "http://jira";
-        config.issues = [{ name: "Sonstiges", value: "TXR-13128" }];
+        Object.assign(
+            config,
+            createMockConfig({ jiraUrl: "http://jira", issues: [{ name: "Sonstiges", value: "TXR-13128" }] }),
+        );
     });
 
     beforeEach(() => {

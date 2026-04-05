@@ -2,19 +2,9 @@ import nock from "nock";
 import moment from "moment";
 import * as testModule from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
+import { createMockConfig } from "./helpers.js";
 
-const config = vi.hoisted(
-    () =>
-        ({
-            togglUrl: "",
-            issues: [],
-            maxLastIssues: 10,
-            maxLastDays: 30,
-            jiraProjectKeys: [],
-            jiraUrl: "",
-            togglWorkspace: "",
-        }) as AppConfig,
-);
+const config = vi.hoisted(() => ({}) as AppConfig);
 
 vi.mock("../config.json", () => ({ default: config }));
 
@@ -54,13 +44,18 @@ describe("toggl module", () => {
     let getTogglTimeEntriesScope: nock.Scope;
 
     beforeAll(() => {
-        config.togglUrl = "http://toggl";
-        config.togglWorkspace = "Zwick";
-        config.issues = [
-            { name: "Sonstiges", value: "TXR-18227" },
-            { name: "Sonderbesprechung", value: "TXR-18224" },
-        ];
-        config.jiraProjectKeys = ["TXR", "TXAT"];
+        Object.assign(
+            config,
+            createMockConfig({
+                togglUrl: "http://toggl",
+                togglWorkspace: "Zwick",
+                issues: [
+                    { name: "Sonstiges", value: "TXR-18227" },
+                    { name: "Sonderbesprechung", value: "TXR-18224" },
+                ],
+                jiraProjectKeys: ["TXR", "TXAT"],
+            }),
+        );
     });
 
     beforeEach(() => {
