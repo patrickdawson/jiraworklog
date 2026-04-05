@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "tsc && node dist/server.js"
+    "dev": "tsx server.ts"
   },
   "dependencies": {
     "express": "^4.18.2"
@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
 }
