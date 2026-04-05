@@ -6,3 +6,4 @@ node_modules
 
 dist
 dist-test
+simulator/node_modules
