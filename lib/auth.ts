@@ -1,4 +1,4 @@
-import got, { HTTPError } from "got";
+import axios from "axios";
 import inquirer from "inquirer";
 import config from "../config.json" with { type: "json" };
 import type { Authorization, AuthDefaults } from "./types.js";
@@ -11,22 +11,20 @@ async function checkCredentials({
     password: string;
 }): Promise<boolean> {
     try {
-        const { body } = await got.get<{ displayName: string }>(
+        const { data } = await axios.get<{ displayName: string }>(
             `${config.jiraUrl}/rest/api/2/myself`,
             {
-                responseType: "json",
-                username: user,
-                password,
+                auth: { username: user, password },
             },
         );
-        console.log(`-> Hello ${body.displayName}. Your credentials are correct.`);
+        console.log(`-> Hello ${data.displayName}. Your credentials are correct.`);
         return true;
     } catch (err) {
-        if (err instanceof HTTPError) {
+        if (axios.isAxiosError(err)) {
             // Unauthorized
-            if (err.response.statusCode === 401) {
+            if (err.response?.status === 401) {
                 return false;
-            } else if (err.response.statusCode === 403) {
+            } else if (err.response?.status === 403) {
                 throw new Error(
                     "Jira rejected your account. Use your browser to login and solve any captcha requests.",
                     { cause: err },

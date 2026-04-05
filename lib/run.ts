@@ -2,7 +2,7 @@ import _ from "lodash";
 import inquirer from "inquirer";
 import moment from "moment";
 import type { Moment } from "moment";
-import got from "got";
+import axios from "axios";
 import Conf from "conf";
 import fuzzy from "fuzzy";
 import { table } from "table";
@@ -129,17 +129,15 @@ async function postToJira(
     console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
 
     try {
-        const authObject =
+        const authConfig =
             typeof authorization === "string"
                 ? { headers: { Authorization: authorization } }
-                : {
-                      username: authorization.user,
-                      password: authorization.password,
-                  };
-        await got.post(`${config.jiraUrl}/rest/api/latest/issue/${issue}/worklog`, {
-            json: postData,
-            ...authObject,
-        });
+                : { auth: { username: authorization.user, password: authorization.password! } };
+        await axios.post(
+            `${config.jiraUrl}/rest/api/latest/issue/${issue}/worklog`,
+            postData,
+            authConfig,
+        );
     } catch (err) {
         console.error(`Failed to add worklog: Reason: ${(err as Error).message}`);
     }
