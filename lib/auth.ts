@@ -3,13 +3,18 @@ import { input, password } from "@inquirer/prompts";
 import config from "../config.json" with { type: "json" };
 import type { Authorization, AuthDefaults } from "./types.js";
 
-async function checkCredentials({
-    user,
-    password,
-}: {
-    user: string;
-    password: string;
-}): Promise<boolean> {
+type CheckCredentialsOptions = { silent?: boolean };
+
+async function checkCredentials(
+    {
+        user,
+        password,
+    }: {
+        user: string;
+        password: string;
+    },
+    options: CheckCredentialsOptions = {},
+): Promise<boolean> {
     try {
         const { data } = await axios.get<{ displayName: string }>(
             `${config.jiraUrl}/rest/api/2/myself`,
@@ -17,7 +22,9 @@ async function checkCredentials({
                 auth: { username: user, password },
             },
         );
-        console.log(`-> Hello ${data.displayName}. Your credentials are correct.`);
+        if (!options.silent) {
+            console.log(`-> Hello ${data.displayName}. Your credentials are correct.`);
+        }
         return true;
     } catch (err) {
         if (axios.isAxiosError(err)) {
@@ -65,4 +72,25 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
     return credentials;
 };
 
-export { getAuthorization };
+/**
+ * Non-interactive auth: Bearer token from env/UI, or user + password (validated against Jira).
+ */
+async function resolveAuthorization(
+    defaults: AuthDefaults & { user?: string; password?: string },
+): Promise<Authorization> {
+    if (defaults.token) {
+        return `Bearer ${defaults.token}`;
+    }
+    const user = defaults.user;
+    const password = defaults.password ?? process.env["JIRA_PASS"];
+    if (!user || !password) {
+        throw new Error("Jira user and password are required when JIRA_TOKEN is not set.");
+    }
+    const credentials = { user, password };
+    if (!(await checkCredentials(credentials, { silent: true }))) {
+        throw new Error("Invalid username or password.");
+    }
+    return credentials;
+}
+
+export { getAuthorization, resolveAuthorization, checkCredentials };

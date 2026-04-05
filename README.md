@@ -6,6 +6,34 @@ Command line tool to add worklogs quickly
 * Import time entries from toggl directly into Jira
 * Print summary of toggl time entries before adding them to jira
 * Add manual time entries with inquirer
+* Desktop app (Electron) with the same Toggl import and manual booking flows
+
+
+# Desktop app (Electron)
+
+Run the UI locally (loads `.env` / `.env.local` like the CLI):
+
+```bash
+npm run dev:app
+```
+
+Production build output is written to `out/`. To produce a Windows installer with [electron-builder](https://www.electron.build/):
+
+```bash
+npm run dist
+```
+
+Artifacts appear under `release/`.
+
+Environment variables (same as the CLI):
+
+* `JIRA_TOKEN` — optional; if set, the app can skip password login.
+* `JIRA_PASS` — optional default password for non-token auth.
+* `TOGGL_API_TOKEN` — required for Toggl import.
+
+The command-line tool is unchanged: use `npm run dev` or `npm start` for the Inquirer-based CLI.
+
+The Windows / installer icon comes from [`build/icon.png`](build/icon.png) (also copied to [`src/renderer/public/app-icon.png`](src/renderer/public/app-icon.png) for the in-app header).
 
 
 # Jira Setup
