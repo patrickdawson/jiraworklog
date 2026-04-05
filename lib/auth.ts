@@ -49,9 +49,11 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
         message: "Für welchen Benutzer möchtest du buchen",
         default: defaults.user,
     });
-    const pwd = defaults.password ?? await password({
-        message: `Passwort für den Benutzer ${user || defaults.user}`,
-    });
+    const pwd =
+        defaults.password ??
+        (await password({
+            message: `Passwort für den Benutzer ${user || defaults.user}`,
+        }));
     const credentials = { user, password: pwd };
 
     // re-try if credentials are wrong

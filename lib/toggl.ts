@@ -1,6 +1,6 @@
 import _ from "lodash";
 import axios from "axios";
-import type { Moment } from "moment";
+import type { Dayjs } from "dayjs";
 import config from "../config.json" with { type: "json" };
 import type {
     TogglApiTimeEntry,
@@ -47,13 +47,11 @@ async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
     );
 }
 
-async function getTimeEntries(dateToBook: Moment): Promise<TogglTimeEntry[]> {
-    // copy dateToBook to prevent mutation of reference by adding one day below.
-    const dataToBookCopy = dateToBook.clone();
+async function getTimeEntries(dateToBook: Dayjs): Promise<TogglTimeEntry[]> {
     const dict = await getProjectsIdToNameDict();
-    const toTogglDate = (date: Moment) => date.format("YYYY-MM-DD");
-    const toggleDateStart = toTogglDate(dataToBookCopy);
-    const toggleDateEnd = toTogglDate(dataToBookCopy.add(1, "day"));
+    const toTogglDate = (date: Dayjs) => date.format("YYYY-MM-DD");
+    const toggleDateStart = toTogglDate(dateToBook);
+    const toggleDateEnd = toTogglDate(dateToBook.add(1, "day"));
     const { data: body } = await axios.get<TogglApiTimeEntry[]>(
         `${config.togglUrl}/me/time_entries`,
         {

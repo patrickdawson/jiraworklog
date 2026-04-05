@@ -1,5 +1,12 @@
 import nock from "nock";
-import moment from "moment";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import weekday from "dayjs/plugin/weekday.js";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import "dayjs/locale/de.js";
+
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
 import * as inquirerPrompts from "@inquirer/prompts";
 import Conf from "conf";
 import * as testModule from "../lib/run.js";
@@ -8,7 +15,7 @@ import * as toggl from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
 import { createMockConfig } from "./helpers.js";
 
-moment.locale("de");
+dayjs.locale("de");
 
 vi.mock("@inquirer/prompts");
 vi.mock("conf");
@@ -35,19 +42,22 @@ const mockSearch = () => vi.mocked(inquirerPrompts.search) as any;
 
 describe("run test", () => {
     let postScope: nock.Scope;
-    let dayToBook: moment.Moment;
+    let dayToBook: Dayjs;
 
     beforeAll(() => {
         Object.assign(
             config,
-            createMockConfig({ jiraUrl: "http://jira", issues: [{ name: "Sonstiges", value: "TXR-13128" }] }),
+            createMockConfig({
+                jiraUrl: "http://jira",
+                issues: [{ name: "Sonstiges", value: "TXR-13128" }],
+            }),
         );
     });
 
     beforeEach(() => {
         vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "user1" });
 
-        dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
+        dayToBook = dayjs().subtract(dayjs().weekday() === 0 ? 3 : 1, "days");
 
         // Date selection
         mockSelect().mockResolvedValueOnce(dayToBook.format("dddd[,] LL"));

@@ -1,5 +1,5 @@
 import nock from "nock";
-import moment from "moment";
+import dayjs from "dayjs";
 import * as testModule from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
 import { createMockConfig } from "./helpers.js";
@@ -8,7 +8,7 @@ const config = vi.hoisted(() => ({}) as AppConfig);
 
 vi.mock("../config.json", () => ({ default: config }));
 
-const dateStart = moment("2022-01-01");
+const dateStart = dayjs("2022-01-01");
 
 function createTogglGetWorkspacesScope(
     replyStatus = 200,
@@ -32,7 +32,7 @@ function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue: unknown =
         .get("/me/time_entries")
         .query({
             start_date: dateStart.format("YYYY-MM-DD"),
-            end_date: dateStart.clone().add(1, "day").format("YYYY-MM-DD"),
+            end_date: dateStart.add(1, "day").format("YYYY-MM-DD"),
         })
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);

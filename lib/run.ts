@@ -1,7 +1,13 @@
 import _ from "lodash";
 import { select, input, confirm, search } from "@inquirer/prompts";
-import moment from "moment";
-import type { Moment } from "moment";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import weekday from "dayjs/plugin/weekday.js";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import "dayjs/locale/de.js";
+
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
 import axios from "axios";
 import Conf from "conf";
 import fuzzy from "fuzzy";
@@ -13,7 +19,7 @@ import type { Authorization, ConfSchema, WorkLogEntry } from "./types.js";
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 const configstore = new Conf<ConfSchema>();
-moment.locale("de");
+dayjs.locale("de");
 
 const expandIssue = (value: string): string => (/^[0-9].*/.test(value) ? `TXR-${value}` : value);
 
@@ -53,10 +59,16 @@ type IssueChoice = { name: string; value: string };
 const searchKnownIssues = async (term: string | void): Promise<IssueChoice[]> => {
     const inputStr = term ?? "";
     const lastIssueChoices: IssueChoice[] = getLastIssues().map((k) => ({ name: k, value: k }));
-    const configIssueChoices: IssueChoice[] = config.issues.map((i) => ({ name: i.name, value: i.value }));
+    const configIssueChoices: IssueChoice[] = config.issues.map((i) => ({
+        name: i.name,
+        value: i.value,
+    }));
     const allChoices = [...lastIssueChoices, ...configIssueChoices];
 
-    const fuzzyResult = fuzzy.filter(inputStr, allChoices.map((c) => c.name));
+    const fuzzyResult = fuzzy.filter(
+        inputStr,
+        allChoices.map((c) => c.name),
+    );
     const filteredNames = new Set(fuzzyResult.map((r) => r.original));
     const filtered = allChoices.filter((c) => filteredNames.has(c.name));
 
@@ -66,13 +78,13 @@ const searchKnownIssues = async (term: string | void): Promise<IssueChoice[]> =>
     return filtered;
 };
 
-const getDateToBook = async (): Promise<Moment> => {
-    const dateToObject = (date: Moment) => ({ date, text: date.format("dddd[,] LL") });
+const getDateToBook = async (): Promise<Dayjs> => {
+    const dateToObject = (date: Dayjs) => ({ date, text: date.format("dddd[,] LL") });
     const createDayIndices = (count: number) => [...Array(count).keys()];
-    const dayIndexToDateObjMapper = (i: number) => dateToObject(moment().subtract(i, "day"));
+    const dayIndexToDateObjMapper = (i: number) => dateToObject(dayjs().subtract(i, "day"));
 
     const lastDays = createDayIndices(config.maxLastDays || 10).map(dayIndexToDateObjMapper);
-    const lastWorkdayIdx = moment().weekday() === 0 ? 3 : 1;
+    const lastWorkdayIdx = dayjs().weekday() === 0 ? 3 : 1;
 
     const selectedText = await select({
         message: "Auf welchen Tag möchtest du buchen?",
@@ -120,7 +132,7 @@ async function postToJira(
         timeSpent,
         message,
     }: { issueKey: string; timeSpent: string; message: string | undefined },
-    dateToBook: Moment,
+    dateToBook: Dayjs,
     authorization: Authorization,
 ): Promise<void> {
     const postData = {
@@ -146,7 +158,7 @@ async function postToJira(
     }
 }
 
-const addWorklog = async (authorization: Authorization, dateToBook: Moment): Promise<void> => {
+const addWorklog = async (authorization: Authorization, dateToBook: Dayjs): Promise<void> => {
     const issueSelection = await search<string>({
         message: "Welchen Issue willst du buchen",
         source: searchKnownIssues,
@@ -179,7 +191,7 @@ const addWorklog = async (authorization: Authorization, dateToBook: Moment): Pro
     }
 };
 
-async function importToggl(authorization: Authorization, dateToBook: Moment): Promise<void> {
+async function importToggl(authorization: Authorization, dateToBook: Dayjs): Promise<void> {
     const timeEntries = await getTimeEntries(dateToBook);
     const workLogEntries = convertToWorkLogEntries(timeEntries);
     const invalidWorkLogEntries = _.remove(
