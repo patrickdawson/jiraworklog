@@ -1,6 +1,6 @@
 import nock from "nock";
 import moment from "moment";
-import inquirer from "inquirer";
+import * as inquirerPrompts from "@inquirer/prompts";
 import Conf from "conf";
 import * as testModule from "../lib/run.js";
 import * as auth from "../lib/auth.js";
@@ -10,7 +10,7 @@ import { createMockConfig } from "./helpers.js";
 
 moment.locale("de");
 
-vi.mock("inquirer");
+vi.mock("@inquirer/prompts");
 vi.mock("conf");
 vi.mock("../lib/auth");
 vi.mock("../lib/toggl");
@@ -22,6 +22,16 @@ const consoleLogMock = vi.fn();
 global.console.log = consoleLogMock;
 const consoleErrorMock = vi.fn();
 global.console.error = consoleErrorMock;
+
+// Typed helpers to mock individual @inquirer/prompts functions without generic inference issues
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockSelect = () => vi.mocked(inquirerPrompts.select) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockConfirm = () => vi.mocked(inquirerPrompts.confirm) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockInput = () => vi.mocked(inquirerPrompts.input) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockSearch = () => vi.mocked(inquirerPrompts.search) as any;
 
 describe("run test", () => {
     let postScope: nock.Scope;
@@ -39,27 +49,24 @@ describe("run test", () => {
 
         dayToBook = moment().subtract(moment().weekday() === 0 ? 3 : 1, "days");
 
-        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-            dayToBook: dayToBook.format("dddd[,] LL"),
-        });
-        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-            toggl: false,
-        });
-        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-            issueSelection: "TXR-1234",
-            time: "1d",
-            message: "message to book",
-        });
-        vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-            continue: false,
-        });
+        // Date selection
+        mockSelect().mockResolvedValueOnce(dayToBook.format("dddd[,] LL"));
+        // Toggl question (false = manual mode), then continue question (false = stop)
+        mockConfirm().mockResolvedValueOnce(false).mockResolvedValueOnce(false);
+        // Issue selection
+        mockSearch().mockResolvedValueOnce("TXR-1234");
+        // Time input, then message input (non-Sonstiges branch)
+        mockInput().mockResolvedValueOnce("1d").mockResolvedValueOnce("message to book");
 
         postScope = nock("http://jira").post("/rest/api/latest/issue/TXR-1234/worklog").reply(200);
     });
 
     afterEach(() => {
         nock.cleanAll();
-        vi.mocked(inquirer.prompt).mockReset();
+        mockSelect().mockReset();
+        mockConfirm().mockReset();
+        mockSearch().mockReset();
+        mockInput().mockReset();
         consoleLogMock.mockClear();
         consoleErrorMock.mockClear();
     });
@@ -103,13 +110,15 @@ describe("run test", () => {
 
         describe("toggl mode", () => {
             beforeEach(() => {
-                vi.mocked(inquirer.prompt).mockReset();
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-                    dayToBook: dayToBook.format("dddd[,] LL"),
-                });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: true });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
+                mockSelect().mockReset();
+                mockConfirm().mockReset();
+                mockSearch().mockReset();
+                mockInput().mockReset();
+
+                mockSelect().mockResolvedValueOnce(dayToBook.format("dddd[,] LL"));
+                // toggl: true, then sendToJira: true
+                mockConfirm().mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+
                 vi.mocked(toggl.getTimeEntries).mockResolvedValue([
                     { project: "Sonstiges", duration: 60, description: "Foo" },
                 ]);
@@ -126,13 +135,8 @@ describe("run test", () => {
             });
 
             it("does not post worklog to jira if sendToJira is false", async () => {
-                vi.mocked(inquirer.prompt).mockReset();
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({
-                    dayToBook: dayToBook.format("dddd[,] LL"),
-                });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ toggl: true });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ sendToJira: false });
-                vi.mocked(inquirer.prompt).mockResolvedValueOnce({ continue: false });
+                mockConfirm().mockReset();
+                mockConfirm().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
                 await testModule.run();
 

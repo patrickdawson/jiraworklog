@@ -1,5 +1,5 @@
 import axios from "axios";
-import inquirer from "inquirer";
+import { input, password } from "@inquirer/prompts";
 import config from "../config.json" with { type: "json" };
 import type { Authorization, AuthDefaults } from "./types.js";
 
@@ -45,25 +45,14 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
         return `Bearer ${defaults.token}`;
     }
 
-    const answers = await inquirer.prompt([
-        {
-            type: "input",
-            name: "user",
-            message: "Für welchen Benutzer möchtest du buchen",
-            default: () => defaults.user,
-        },
-        {
-            type: "password",
-            name: "password",
-            message: (a: Record<string, unknown>) =>
-                `Passwort für den Benutzer ${(a.user as string) || defaults.user}`,
-            when: () => !defaults.password,
-        },
-    ]);
-    const credentials = {
-        user: answers.user as string,
-        password: (defaults.password || (answers.password as string)) as string,
-    };
+    const user = await input({
+        message: "Für welchen Benutzer möchtest du buchen",
+        default: defaults.user,
+    });
+    const pwd = defaults.password ?? await password({
+        message: `Passwort für den Benutzer ${user || defaults.user}`,
+    });
+    const credentials = { user, password: pwd };
 
     // re-try if credentials are wrong
     if (!(await checkCredentials(credentials))) {
