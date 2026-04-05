@@ -1,29 +1,43 @@
-"use strict";
-
-const express = require("express");
-const path = require("path");
+import express, { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const PORT = 3000;
 
+// Resolve public/ whether running via ts-node (simulator/) or compiled (simulator/dist/)
+const publicDir = fs.existsSync(path.join(__dirname, "public"))
+    ? path.join(__dirname, "public")
+    : path.join(__dirname, "..", "public");
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(publicDir));
 
 // In-memory store
-let worklogs = [];
+interface WorklogEntry {
+    id: number;
+    issueKey: string;
+    timeSpent: string;
+    started: string;
+    comment: string;
+    receivedAt: string;
+    auth: string;
+}
+
+let worklogs: WorklogEntry[] = [];
 let nextId = 1;
 
 // SSE clients
-const sseClients = new Set();
+const sseClients = new Set<Response>();
 
-function broadcast(event, data) {
+function broadcast(event: string, data: object): void {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const res of sseClients) {
         res.write(payload);
     }
 }
 
-function parseAuth(header) {
+function parseAuth(header: string | undefined): string {
     if (!header) return "anonymous";
     if (header.startsWith("Bearer ")) {
         const token = header.slice(7);
@@ -37,7 +51,7 @@ function parseAuth(header) {
     return header.slice(0, 20);
 }
 
-function getDisplayName(header) {
+function getDisplayName(header: string | undefined): string {
     if (!header) return "anonymous";
     if (header.startsWith("Bearer ")) {
         return "token-user";
@@ -50,18 +64,22 @@ function getDisplayName(header) {
 }
 
 // GET /rest/api/2/myself — auth validation
-app.get("/rest/api/2/myself", (req, res) => {
+app.get("/rest/api/2/myself", (req: Request, res: Response) => {
     const displayName = getDisplayName(req.headers.authorization);
     res.json({ displayName });
 });
 
 // POST /rest/api/latest/issue/:issueKey/worklog — submit worklog
-app.post("/rest/api/latest/issue/:issueKey/worklog", (req, res) => {
+app.post<{ issueKey: string }>("/rest/api/latest/issue/:issueKey/worklog", (req, res) => {
     const { issueKey } = req.params;
-    const { timeSpent, started, comment } = req.body;
+    const { timeSpent, started, comment } = req.body as {
+        timeSpent?: string;
+        started?: string;
+        comment?: string;
+    };
     const auth = parseAuth(req.headers.authorization);
 
-    const entry = {
+    const entry: WorklogEntry = {
         id: nextId++,
         issueKey,
         timeSpent: timeSpent || "",
@@ -79,7 +97,7 @@ app.post("/rest/api/latest/issue/:issueKey/worklog", (req, res) => {
 });
 
 // GET /events — SSE endpoint
-app.get("/events", (req, res) => {
+app.get("/events", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -96,7 +114,7 @@ app.get("/events", (req, res) => {
 });
 
 // DELETE /api/worklogs — clear all entries
-app.delete("/api/worklogs", (req, res) => {
+app.delete("/api/worklogs", (_req: Request, res: Response) => {
     worklogs = [];
     nextId = 1;
     broadcast("clear", {});
