@@ -1,24 +1,14 @@
 import nock from "nock";
-import moment from "moment";
+import dayjs from "dayjs";
 import * as testModule from "../lib/toggl.js";
 import type { AppConfig } from "../lib/types";
+import { createMockConfig } from "./helpers.js";
 
-const config = vi.hoisted(
-    () =>
-        ({
-            togglUrl: "",
-            issues: [],
-            maxLastIssues: 10,
-            maxLastDays: 30,
-            jiraProjectKeys: [],
-            jiraUrl: "",
-            togglWorkspace: "",
-        }) as AppConfig,
-);
+const config = vi.hoisted(() => ({}) as AppConfig);
 
 vi.mock("../config.json", () => ({ default: config }));
 
-const dateStart = moment("2022-01-01");
+const dateStart = dayjs("2022-01-01");
 
 function createTogglGetWorkspacesScope(
     replyStatus = 200,
@@ -42,7 +32,7 @@ function createTogglGetTimeEntriesScope(replyStatus = 200, replyValue: unknown =
         .get("/me/time_entries")
         .query({
             start_date: dateStart.format("YYYY-MM-DD"),
-            end_date: dateStart.clone().add(1, "day").format("YYYY-MM-DD"),
+            end_date: dateStart.add(1, "day").format("YYYY-MM-DD"),
         })
         .basicAuth({ user: "mytoken", pass: "api_token" })
         .reply(replyStatus, replyValue);
@@ -54,13 +44,18 @@ describe("toggl module", () => {
     let getTogglTimeEntriesScope: nock.Scope;
 
     beforeAll(() => {
-        config.togglUrl = "http://toggl";
-        config.togglWorkspace = "Zwick";
-        config.issues = [
-            { name: "Sonstiges", value: "TXR-18227" },
-            { name: "Sonderbesprechung", value: "TXR-18224" },
-        ];
-        config.jiraProjectKeys = ["TXR", "TXAT"];
+        Object.assign(
+            config,
+            createMockConfig({
+                togglUrl: "http://toggl",
+                togglWorkspace: "Zwick",
+                issues: [
+                    { name: "Sonstiges", value: "TXR-18227" },
+                    { name: "Sonderbesprechung", value: "TXR-18224" },
+                ],
+                jiraProjectKeys: ["TXR", "TXAT"],
+            }),
+        );
     });
 
     beforeEach(() => {

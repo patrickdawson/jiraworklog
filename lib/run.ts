@@ -1,12 +1,17 @@
 import _ from "lodash";
-import inquirer from "inquirer";
-import moment from "moment";
-import type { Moment } from "moment";
+import { select, input, confirm, search } from "@inquirer/prompts";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import weekday from "dayjs/plugin/weekday.js";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import "dayjs/locale/de.js";
+
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
 import axios from "axios";
 import Conf from "conf";
 import fuzzy from "fuzzy";
 import { table } from "table";
-import autocompletePrompt from "inquirer-autocomplete-prompt";
 import { getAuthorization } from "./auth.js";
 import { getTimeEntries, convertToWorkLogEntries } from "./toggl.js";
 import config from "../config.json" with { type: "json" };
@@ -14,9 +19,7 @@ import type { Authorization, ConfSchema, WorkLogEntry } from "./types.js";
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 const configstore = new Conf<ConfSchema>();
-moment.locale("de");
-
-inquirer.registerPrompt("autocomplete", autocompletePrompt);
+dayjs.locale("de");
 
 const expandIssue = (value: string): string => (/^[0-9].*/.test(value) ? `TXR-${value}` : value);
 
@@ -46,44 +49,57 @@ const getIssueKeyByName = (name: string): string => {
     throw new Error(`Issue with name '${name}' not found!`);
 };
 
+type IssueChoice = { name: string; value: string };
+
 /**
- * Search function for inquirer autocomplete prompt.
- * @param _answersSoFar - Not used.
- * @param input - User input.
+ * Search function for the autocomplete (search) prompt.
+ * Returns typed choices where `value` is always the resolved issue key.
+ * @param term - User input.
  */
-const searchKnownIssues = async (_answersSoFar: unknown, input: string): Promise<string[]> => {
-    input = input || "";
-    const fuzzyResult = fuzzy.filter(input, getAllIssues());
-    const values = _.map(fuzzyResult, (result) => result.original);
-    if (input && !_.includes(values, expandIssue(input))) {
-        return [...values, input];
+const searchKnownIssues = async (term: string | void): Promise<IssueChoice[]> => {
+    const inputStr = term ?? "";
+    const lastIssueChoices: IssueChoice[] = getLastIssues().map((k) => ({ name: k, value: k }));
+    const configIssueChoices: IssueChoice[] = config.issues.map((i) => ({
+        name: i.name,
+        value: i.value,
+    }));
+    const allChoices = [...lastIssueChoices, ...configIssueChoices];
+
+    const fuzzyResult = fuzzy.filter(
+        inputStr,
+        allChoices.map((c) => c.name),
+    );
+    const filteredNames = new Set(fuzzyResult.map((r) => r.original));
+    const filtered = allChoices.filter((c) => filteredNames.has(c.name));
+
+    if (inputStr && !filtered.some((c) => c.value === expandIssue(inputStr))) {
+        return [...filtered, { name: inputStr, value: expandIssue(inputStr) }];
     }
-    return values;
+    return filtered;
 };
 
-const getDateToBook = async (): Promise<Moment> => {
-    const dateToObject = (date: Moment) => ({ date, text: date.format("dddd[,] LL") });
+const getDateToBook = async (): Promise<Dayjs> => {
+    const dateToObject = (date: Dayjs) => ({ date, text: date.format("dddd[,] LL") });
     const createDayIndices = (count: number) => [...Array(count).keys()];
-    const dayIndexToDateObjMapper = (i: number) => dateToObject(moment().subtract(i, "day"));
+    const dayIndexToDateObjMapper = (i: number) => dateToObject(dayjs().subtract(i, "day"));
 
     const lastDays = createDayIndices(config.maxLastDays || 10).map(dayIndexToDateObjMapper);
+    const lastWorkdayIdx = dayjs().weekday() === 0 ? 3 : 1;
 
-    const lastWorkdayIdx = moment().weekday() === 0 ? 3 : 1;
+    const selectedText = await select({
+        message: "Auf welchen Tag möchtest du buchen?",
+        choices: lastDays.map((d) => d.text),
+        default: lastDays[lastWorkdayIdx].text,
+    });
 
-    const answers = await inquirer.prompt([
-        {
-            type: "list",
-            name: "dayToBook",
-            message: "Auf welchen Tag möchtest du buchen?",
-            choices: _.map(lastDays, "text"),
-            default: lastWorkdayIdx,
-        },
-    ]);
-    const selectedDate = _.find(lastDays, ["text", answers.dayToBook])!.date;
+    const selectedDay = _.find(lastDays, ["text", selectedText]);
+    if (!selectedDay) {
+        throw new Error(`Selected day "${selectedText}" not found in lastDays`);
+    }
 
-    console.log(`Sie buchen auf ${selectedDate.format("dddd[,] LL")}`);
+    console.log(`Sie buchen auf ${selectedDay.date.format("dddd[,] LL")}`);
 
-    return selectedDate;
+    return selectedDay.date;
 };
 
 /**
@@ -116,17 +132,16 @@ async function postToJira(
         timeSpent,
         message,
     }: { issueKey: string; timeSpent: string; message: string | undefined },
-    dateToBook: Moment,
+    dateToBook: Dayjs,
     authorization: Authorization,
 ): Promise<void> {
-    const issue = issueKey;
     const postData = {
         timeSpent,
         started: dateToBook.toISOString().replace("Z", "+0000"),
         comment: message,
     };
 
-    console.log(`Book: '${JSON.stringify(postData)}' on issue '${issue}'`);
+    console.log(`Book: '${JSON.stringify(postData)}' on issue '${issueKey}'`);
 
     try {
         const authConfig =
@@ -134,7 +149,7 @@ async function postToJira(
                 ? { headers: { Authorization: authorization } }
                 : { auth: { username: authorization.user, password: authorization.password! } };
         await axios.post(
-            `${config.jiraUrl}/rest/api/latest/issue/${issue}/worklog`,
+            `${config.jiraUrl}/rest/api/latest/issue/${issueKey}/worklog`,
             postData,
             authConfig,
         );
@@ -143,70 +158,40 @@ async function postToJira(
     }
 }
 
-const addWorklog = async (authorization: Authorization, dateToBook: Moment): Promise<void> => {
-    let answers = await inquirer.prompt([
-        {
-            type: "autocomplete" as string,
-            name: "issueSelection",
-            message: "Welchen Issue willst du buchen",
-            source: searchKnownIssues,
-            filter: (value: string) => {
-                const issueFromConfig = _.find(config.issues, ["name", value]);
-                return issueFromConfig ? issueFromConfig.value : expandIssue(value);
-            },
-        },
-        {
-            type: "input",
-            name: "time",
-            message: "Wieviel Zeit willst du buchen",
-        },
-        {
-            type: "input",
-            name: "message",
-            message: "Buchungstext (optional)",
-            when: (a: Record<string, unknown>) =>
-                (a.issueSelection as string) !== getIssueKeyByName("Sonstiges"),
-        },
-        {
-            type: "input",
-            name: "message",
-            message: "Buchungstext",
-            default: "Emails/Confluence/Buchen",
-            when: (a: Record<string, unknown>) =>
-                (a.issueSelection as string) === getIssueKeyByName("Sonstiges"),
-        },
-    ]);
+const addWorklog = async (authorization: Authorization, dateToBook: Dayjs): Promise<void> => {
+    const issueSelection = await search<string>({
+        message: "Welchen Issue willst du buchen",
+        source: searchKnownIssues,
+    });
 
-    const issue = answers.issueSelection as string;
+    const time = await input({ message: "Wieviel Zeit willst du buchen" });
+
+    let message: string | undefined;
+    if (issueSelection === getIssueKeyByName("Sonstiges")) {
+        message = await input({ message: "Buchungstext", default: "Emails/Confluence/Buchen" });
+    } else {
+        const messageInput = await input({ message: "Buchungstext (optional)" });
+        message = messageInput || undefined;
+    }
+
     const allIssueKeys = getAllIssues(true);
-    if (!_.includes(allIssueKeys, answers.issueSelection)) {
-        addToLastIssues(issue);
+    if (!_.includes(allIssueKeys, issueSelection)) {
+        addToLastIssues(issueSelection);
     }
 
     await postToJira(
-        {
-            issueKey: issue,
-            timeSpent: answers.time as string,
-            message: answers.message as string | undefined,
-        },
+        { issueKey: issueSelection, timeSpent: time, message },
         dateToBook,
         authorization,
     );
 
-    answers = await inquirer.prompt([
-        {
-            type: "confirm",
-            name: "continue",
-            message: "Weitere Buchung durchführen",
-        },
-    ]);
-
-    if (answers.continue) {
+    const shouldContinue = await confirm({ message: "Weitere Buchung durchführen" });
+    if (shouldContinue) {
         await addWorklog(authorization, dateToBook);
     }
 };
 
-async function importToggl(authorization: Authorization, dateToBook: Moment): Promise<void> {
+async function importToggl(authorization: Authorization, dateToBook: Dayjs): Promise<void> {
     const timeEntries = await getTimeEntries(dateToBook);
     const workLogEntries = convertToWorkLogEntries(timeEntries);
     const invalidWorkLogEntries = _.remove(
@@ -239,14 +224,8 @@ async function importToggl(authorization: Authorization, dateToBook: Moment): Pr
     const durationSum = _.sumBy(workLogEntries, "durationMin");
     console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
 
-    const answers = await inquirer.prompt([
-        {
-            type: "confirm",
-            name: "sendToJira",
-            message: "Soll die Buchung in Jira durchgeführt werden?",
-        },
-    ]);
-    if (answers.sendToJira) {
+    const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
+    if (sendToJira) {
         for (const workLogEntry of workLogEntries) {
             await postToJira(
                 {
@@ -275,15 +254,11 @@ const run = async (): Promise<void> => {
 
         const dateToBook = await getDateToBook();
 
-        const answers = await inquirer.prompt([
-            {
-                type: "confirm",
-                name: "toggl",
-                message: "Soll die Zeit von Toggl importiert werden?",
-                default: true,
-            },
-        ]);
-        if (answers.toggl) {
+        const useToggl = await confirm({
+            message: "Soll die Zeit von Toggl importiert werden?",
+            default: true,
+        });
+        if (useToggl) {
             await importToggl(authorization, dateToBook);
         } else {
             await addWorklog(authorization, dateToBook);
