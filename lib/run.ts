@@ -79,7 +79,11 @@ const getDateToBook = async (): Promise<Moment> => {
             default: lastWorkdayIdx,
         },
     ]);
-    const selectedDate = _.find(lastDays, ["text", answers.dayToBook])!.date;
+    const selectedDay = _.find(lastDays, ["text", answers.dayToBook]);
+    if (!selectedDay) {
+        throw new Error(`Selected day "${answers.dayToBook}" not found in lastDays`);
+    }
+    const selectedDate = selectedDay.date;
 
     console.log(`Sie buchen auf ${selectedDate.format("dddd[,] LL")}`);
 

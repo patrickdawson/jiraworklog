@@ -14,7 +14,7 @@ import type {
 const password = "api_token";
 
 const createDescription = (collection: object[], key: string): string =>
-    _.flow([_.map, _.uniq, _.compact, _.partialRight(_.join, ", ")])(collection, key) as string;
+    _.uniq(_.compact(_.map(collection, key))).join(", ");
 
 async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
     const { data: workspacesData } = await axios.get<TogglWorkspace[]>(
