@@ -24,11 +24,72 @@ interface WorklogEntry {
     auth: string;
 }
 
+interface SimUser {
+    username: string;
+    password: string;
+    displayName: string;
+}
+
 let worklogs: WorklogEntry[] = [];
 let nextId = 1;
 
+// User store — pre-seeded with a default test user
+const users = new Map<string, SimUser>([
+    ["admin", { username: "admin", password: "admin", displayName: "Admin User" }],
+]);
+
+// Allow overriding the default user via environment variables
+const envUser = process.env["SIMULATOR_USER"];
+const envPass = process.env["SIMULATOR_PASS"];
+if (envUser && envPass) {
+    users.set(envUser, {
+        username: envUser,
+        password: envPass,
+        displayName: process.env["SIMULATOR_DISPLAY_NAME"] ?? envUser,
+    });
+}
+
+function getUserList(): { username: string; displayName: string }[] {
+    return Array.from(users.values()).map((u) => ({
+        username: u.username,
+        displayName: u.displayName,
+    }));
+}
+
+function validateBasicAuth(header: string): SimUser | null {
+    if (!header.startsWith("Basic ")) return null;
+    const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+    const colonIdx = decoded.indexOf(":");
+    if (colonIdx === -1) return null;
+    const username = decoded.slice(0, colonIdx);
+    const password = decoded.slice(colonIdx + 1);
+    const user = users.get(username);
+    if (!user || user.password !== password) return null;
+    return user;
+}
+
 // SSE clients
 const sseClients = new Set<Response>();
+
+// Request logger — skip static assets and SSE (logged separately on connect/disconnect)
+app.use((req: Request, res: Response, next) => {
+    const skip =
+        req.path === "/events" ||
+        req.path.startsWith("/app-icon") ||
+        (req.method === "GET" && !req.path.startsWith("/rest") && !req.path.startsWith("/api"));
+    if (skip) return next();
+
+    const start = Date.now();
+    res.on("finish", () => {
+        const ms = Date.now() - start;
+        const status = res.statusCode;
+        const color = status >= 400 ? "\x1b[31m" : status >= 200 ? "\x1b[32m" : "\x1b[33m";
+        const reset = "\x1b[0m";
+        const auth = parseAuth(req.headers.authorization);
+        console.log(`${color}${status}${reset} ${req.method} ${req.path} (${auth}) ${ms}ms`);
+    });
+    next();
+});
 
 function broadcast(event: string, data: object): void {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -51,22 +112,62 @@ function parseAuth(header: string | undefined): string {
     return header.slice(0, 20);
 }
 
-function getDisplayName(header: string | undefined): string {
-    if (!header) return "anonymous";
-    if (header.startsWith("Bearer ")) {
-        return "token-user";
-    }
-    if (header.startsWith("Basic ")) {
-        const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
-        return decoded.split(":")[0];
-    }
-    return "unknown";
-}
-
-// GET /rest/api/2/myself — auth validation
+// GET /rest/api/2/myself — auth validation (mimics Jira: 401 on bad credentials)
 app.get("/rest/api/2/myself", (req: Request, res: Response) => {
-    const displayName = getDisplayName(req.headers.authorization);
-    res.json({ displayName });
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+    }
+    // Bearer tokens are accepted as-is (no user-store check needed)
+    if (authHeader.startsWith("Bearer ")) {
+        res.json({ displayName: "token-user" });
+        return;
+    }
+    const user = validateBasicAuth(authHeader);
+    if (!user) {
+        res.status(401).json({ message: "Invalid username or password" });
+        return;
+    }
+    res.json({ displayName: user.displayName });
+});
+
+// GET /api/users — list configured test users (passwords omitted)
+app.get("/api/users", (_req: Request, res: Response) => {
+    res.json(getUserList());
+});
+
+// POST /api/users — add or update a test user
+app.post("/api/users", (req: Request, res: Response) => {
+    const { username, password, displayName } = req.body as {
+        username?: string;
+        password?: string;
+        displayName?: string;
+    };
+    if (!username || !password) {
+        res.status(400).json({ message: "username and password are required" });
+        return;
+    }
+    const user: SimUser = {
+        username,
+        password,
+        displayName: displayName?.trim() || username,
+    };
+    users.set(username, user);
+    broadcast("users", getUserList());
+    res.status(201).json({ username, displayName: user.displayName });
+});
+
+// DELETE /api/users/:username — remove a test user
+app.delete("/api/users/:username", (req: Request, res: Response) => {
+    const { username } = req.params;
+    if (!users.has(username)) {
+        res.status(404).json({ message: "User not found" });
+        return;
+    }
+    users.delete(username);
+    broadcast("users", getUserList());
+    res.status(204).end();
 });
 
 // POST /rest/api/latest/issue/:issueKey/worklog — submit worklog
@@ -105,11 +206,14 @@ app.get("/events", (req: Request, res: Response) => {
 
     // Send current state on connect
     res.write(`event: init\ndata: ${JSON.stringify(worklogs)}\n\n`);
+    res.write(`event: users\ndata: ${JSON.stringify(getUserList())}\n\n`);
 
     sseClients.add(res);
+    console.log(`\x1b[36m SSE\x1b[0m client connected (${sseClients.size} total)`);
 
     req.on("close", () => {
         sseClients.delete(res);
+        console.log(`\x1b[36m SSE\x1b[0m client disconnected (${sseClients.size} remaining)`);
     });
 });
 

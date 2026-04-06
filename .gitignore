@@ -5,5 +5,7 @@ node_modules
 .env.local
 
 dist
+out
+release
 dist-test
 simulator/node_modules

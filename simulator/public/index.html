@@ -137,6 +137,108 @@
     }
 
     .empty-state p { margin-top: 8px; font-size: 0.875rem; }
+
+    .users-section {
+      margin-bottom: 24px;
+    }
+
+    .users-section h2 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #6b778c;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 10px;
+    }
+
+    .users-panel {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      padding: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .user-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1 1 100%;
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e3fcef;
+      border: 1px solid #57d9a3;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      color: #006644;
+    }
+
+    .user-chip button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #006644;
+      font-size: 0.85rem;
+      line-height: 1;
+      padding: 0;
+      opacity: .7;
+    }
+
+    .user-chip button:hover { opacity: 1; }
+
+    .add-user-form {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      border-top: 1px solid #f4f5f7;
+      padding-top: 12px;
+      width: 100%;
+    }
+
+    .add-user-form label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b778c;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .add-user-form input {
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      width: 130px;
+    }
+
+    .add-user-form input:focus {
+      outline: none;
+      border-color: #0052cc;
+    }
+
+    .btn-add {
+      background: #0052cc;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover { background: #0747a6; }
   </style>
 </head>
 <body>
@@ -152,6 +254,28 @@
   </header>
 
   <main>
+    <div class="users-section">
+      <h2>Test Users</h2>
+      <div class="users-panel">
+        <div class="user-list" id="userList"></div>
+        <form class="add-user-form" id="addUserForm">
+          <label>
+            Username
+            <input id="newUsername" type="text" placeholder="e.g. alice" required autocomplete="off" />
+          </label>
+          <label>
+            Password
+            <input id="newPassword" type="text" placeholder="e.g. secret" required autocomplete="off" />
+          </label>
+          <label>
+            Display Name
+            <input id="newDisplayName" type="text" placeholder="optional" autocomplete="off" />
+          </label>
+          <button type="submit" class="btn-add">Add User</button>
+        </form>
+      </div>
+    </div>
+
     <div class="meta" id="meta">0 entries</div>
     <div class="table-wrapper">
       <table id="worklogTable">
@@ -187,8 +311,47 @@
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     const btnClear = document.getElementById('btnClear');
+    const userList = document.getElementById('userList');
+    const addUserForm = document.getElementById('addUserForm');
+    const newUsername = document.getElementById('newUsername');
+    const newPassword = document.getElementById('newPassword');
+    const newDisplayName = document.getElementById('newDisplayName');
 
     let count = 0;
+
+    function renderUsers(users) {
+      userList.innerHTML = '';
+      if (!users.length) {
+        userList.innerHTML = '<span style="color:#6b778c;font-size:0.85rem">No users configured</span>';
+        return;
+      }
+      users.forEach(u => {
+        const chip = document.createElement('span');
+        chip.className = 'user-chip';
+        chip.innerHTML = `<strong>${esc(u.username)}</strong> · ${esc(u.displayName)}
+          <button type="button" title="Remove user" data-username="${esc(u.username)}">✕</button>`;
+        chip.querySelector('button').addEventListener('click', () => {
+          fetch(`/api/users/${encodeURIComponent(u.username)}`, { method: 'DELETE' });
+        });
+        userList.appendChild(chip);
+      });
+    }
+
+    addUserForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = newUsername.value.trim();
+      const password = newPassword.value.trim();
+      const displayName = newDisplayName.value.trim();
+      if (!username || !password) return;
+      await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, displayName: displayName || undefined }),
+      });
+      newUsername.value = '';
+      newPassword.value = '';
+      newDisplayName.value = '';
+    });
 
     function formatDate(iso) {
       if (!iso) return '';
@@ -247,6 +410,10 @@
       entries.forEach(entry => appendRow(entry, false));
       statusDot.classList.add('connected');
       statusText.textContent = 'Connected';
+    });
+
+    evtSource.addEventListener('users', (e) => {
+      renderUsers(JSON.parse(e.data));
     });
 
     evtSource.addEventListener('worklog', (e) => {

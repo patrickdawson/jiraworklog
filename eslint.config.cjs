@@ -4,7 +4,7 @@ const globals = require("globals");
 const tseslint = require("typescript-eslint");
 
 module.exports = tseslint.config(
-    { ignores: ["node_modules/", "dist/"] },
+    { ignores: ["node_modules/", "dist/", "out/", "release/"] },
     js.configs.recommended,
     ...tseslint.configs.recommended,
     prettier,
@@ -29,6 +29,17 @@ module.exports = tseslint.config(
         },
         rules: {
             "@typescript-eslint/no-require-imports": "off",
+        },
+    },
+    {
+        files: ["**/*.tsx"],
+        languageOptions: {
+            parserOptions: {
+                ecmaFeatures: { jsx: true },
+            },
+            globals: {
+                ...globals.browser,
+            },
         },
     },
 );
