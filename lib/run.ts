@@ -103,8 +103,11 @@ const addWorklog = async (authorization: Authorization, dateToBook: Dayjs): Prom
 };
 
 async function importToggl(authorization: Authorization, dateToBook: Dayjs): Promise<void> {
-    const { valid: workLogEntries, invalid: invalidWorkLogEntries, totalMinutes } =
-        await buildTogglImportPreview(dateToBook);
+    const {
+        valid: workLogEntries,
+        invalid: invalidWorkLogEntries,
+        totalMinutes,
+    } = await buildTogglImportPreview(dateToBook);
     const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
     const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
         const project = issueKeyToProject[entry.issueKey] || "Custom";

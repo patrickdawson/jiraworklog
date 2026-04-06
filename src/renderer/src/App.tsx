@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { TogglImportPreview } from "./api-types";
 
-const api = window.jiraworklog;
+const api = window.jiraworklog as typeof window.jiraworklog | undefined;
 
 export function App(): JSX.Element {
     const [hasAuth, setHasAuth] = useState(false);
@@ -10,6 +10,7 @@ export function App(): JSX.Element {
     const [user, setUser] = useState("");
     const [password, setPassword] = useState("");
     const [authError, setAuthError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     const [dateOptions, setDateOptions] = useState<{ text: string; iso: string }[]>([]);
     const [defaultDateIdx, setDefaultDateIdx] = useState(1);
@@ -79,16 +80,23 @@ export function App(): JSX.Element {
     async function handleLogin(e: React.FormEvent): Promise<void> {
         e.preventDefault();
         setAuthError(null);
-        const res = await api.login({
-            token: token.trim() || undefined,
-            user: user.trim() || undefined,
-            password: password || undefined,
-        });
-        if (res.ok) {
-            setPassword("");
-            await refreshSession();
-        } else {
-            setAuthError(res.error);
+        setSubmitting(true);
+        try {
+            const res = await api.login({
+                token: token.trim() || undefined,
+                user: user.trim() || undefined,
+                password: password || undefined,
+            });
+            if (res.ok) {
+                setPassword("");
+                await refreshSession();
+            } else {
+                setAuthError(res.error);
+            }
+        } catch (e) {
+            setAuthError(e instanceof Error ? e.message : String(e));
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -135,6 +143,16 @@ export function App(): JSX.Element {
         }
     }
 
+    if (!api) {
+        return (
+            <div className="loading-screen" role="alert">
+                <span>
+                    Fehler: Electron-Preload nicht geladen. Starte die App mit npm run dev:app.
+                </span>
+            </div>
+        );
+    }
+
     if (checking) {
         return (
             <div className="loading-screen" role="status" aria-live="polite">
@@ -147,13 +165,7 @@ export function App(): JSX.Element {
     return (
         <>
             <header className="app-header">
-                <img
-                    className="app-logo"
-                    src="/app-icon.png"
-                    width={52}
-                    height={52}
-                    alt=""
-                />
+                <img className="app-logo" src="/app-icon.png" width={52} height={52} alt="" />
                 <div className="app-header-text">
                     <h1>Jira Worklog</h1>
                     <p>Toggl importieren oder manuell buchen</p>
@@ -203,8 +215,8 @@ export function App(): JSX.Element {
                         </div>
                         {authError ? <p className="msg error">{authError}</p> : null}
                         <div className="btn-row">
-                            <button type="submit" className="primary">
-                                Anmelden
+                            <button type="submit" className="primary" disabled={submitting}>
+                                {submitting ? "Anmelden…" : "Anmelden"}
                             </button>
                         </div>
                     </form>
@@ -267,7 +279,9 @@ export function App(): JSX.Element {
                             </div>
                             {preview ? (
                                 <>
-                                    <div className="section-title section-title--spaced">Gültige Einträge</div>
+                                    <div className="section-title section-title--spaced">
+                                        Gültige Einträge
+                                    </div>
                                     <div className="table-wrap">
                                         <table>
                                             <thead>
@@ -279,7 +293,9 @@ export function App(): JSX.Element {
                                             </thead>
                                             <tbody>
                                                 {preview.valid.map((r, i) => (
-                                                    <tr key={`v-${r.issueKey}-${i}-${r.description.slice(0, 20)}`}>
+                                                    <tr
+                                                        key={`v-${r.issueKey}-${i}-${r.description.slice(0, 20)}`}
+                                                    >
                                                         <td>{r.issueKey}</td>
                                                         <td>{r.durationMin}</td>
                                                         <td>{r.description}</td>
@@ -359,7 +375,11 @@ export function App(): JSX.Element {
                                         placeholder="Name oder Key"
                                     />
                                 </div>
-                                <div className="issue-list" role="listbox" aria-label="Issue-Vorschläge">
+                                <div
+                                    className="issue-list"
+                                    role="listbox"
+                                    aria-label="Issue-Vorschläge"
+                                >
                                     {issueChoices.map((c) => (
                                         <button
                                             key={c.value + c.name}

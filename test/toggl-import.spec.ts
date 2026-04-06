@@ -12,7 +12,9 @@ describe("partitionTogglWorkEntries", () => {
             { issueKey: "TXR-1", durationMin: 30, description: "a" },
             { issueKey: "TXPIV-2", durationMin: 5, description: "c" },
         ]);
-        expect(result.invalid).toEqual([{ issueKey: "undefined", durationMin: 10, description: "b" }]);
+        expect(result.invalid).toEqual([
+            { issueKey: "undefined", durationMin: 10, description: "b" },
+        ]);
         expect(result.totalMinutes).toBe(35);
     });
 

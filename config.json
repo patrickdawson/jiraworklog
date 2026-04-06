@@ -95,7 +95,7 @@
     ],
     "maxLastIssues": 10,
     "maxLastDays": 30,
-    "jiraUrl": "https://jira.zue.zwick.de",
+    "jiraUrl": "http://localhost:3000",
     "togglUrl": "https://api.track.toggl.com/api/v9",
     "togglWorkspace": "Zwick",
     "jiraProjectKeys": ["DS", "TXAT", "TXPIV", "TXR", "TXRS"]

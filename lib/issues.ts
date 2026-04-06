@@ -14,10 +14,7 @@ export function getLastIssues(): string[] {
 }
 
 export function getAllIssues(getKeys?: boolean): string[] {
-    return [
-        ...getLastIssues(),
-        ..._.map(config.issues, (i) => (getKeys ? i.value : i.name)),
-    ];
+    return [...getLastIssues(), ..._.map(config.issues, (i) => (getKeys ? i.value : i.name))];
 }
 
 export function getIssueKeyByName(name: string): string {

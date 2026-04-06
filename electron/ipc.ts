@@ -5,7 +5,12 @@ import { postWorklogToJira } from "../lib/jira-worklog.js";
 import { buildTogglImportPreview } from "../lib/toggl-import.js";
 import { submitManualWorklog } from "../lib/manual-worklog.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "../lib/booking-dates.js";
-import { filterIssueChoices, getIssueKeyByName, getStoredUser, setStoredUser } from "../lib/issues.js";
+import {
+    filterIssueChoices,
+    getIssueKeyByName,
+    getStoredUser,
+    setStoredUser,
+} from "../lib/issues.js";
 import { getSessionAuth, setSessionAuth } from "./session.js";
 
 function tryAuthFromEnv(): void {
@@ -26,7 +31,7 @@ export function registerIpcHandlers(): void {
         ): Promise<{ ok: true; user?: string } | { ok: false; error: string }> => {
             try {
                 const auth = await resolveAuthorization({
-                    token: payload.token?.trim() || process.env["JIRA_TOKEN"],
+                    token: payload.token?.trim() || undefined,
                     user: payload.user,
                     password: payload.password,
                 });

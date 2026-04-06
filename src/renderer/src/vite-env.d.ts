@@ -3,9 +3,11 @@
 declare global {
     interface Window {
         jiraworklog: {
-            login: (
-                payload: { token?: string; user?: string; password?: string },
-            ) => Promise<{ ok: true; user?: string } | { ok: false; error: string }>;
+            login: (payload: {
+                token?: string;
+                user?: string;
+                password?: string;
+            }) => Promise<{ ok: true; user?: string } | { ok: false; error: string }>;
             logout: () => Promise<void>;
             getSession: () => Promise<{ hasAuth: boolean; user?: string }>;
             tryEnv: () => Promise<{ hasAuth: boolean }>;
