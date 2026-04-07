@@ -31,7 +31,7 @@ export function registerIpcHandlers(): void {
         ): Promise<{ ok: true; user?: string } | { ok: false; error: string }> => {
             try {
                 const auth = await resolveAuthorization({
-                    token: payload.token?.trim() || undefined,
+                    token: payload.token?.trim() || process.env["JIRA_TOKEN"]?.trim(),
                     user: payload.user,
                     password: payload.password,
                 });

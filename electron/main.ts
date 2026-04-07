@@ -24,10 +24,9 @@ function createWindow(): void {
         height: 720,
         icon: windowIcon(),
         webPreferences: {
-            preload: path.join(__dirname, "../preload/preload.mjs"),
+            preload: path.join(__dirname, "../preload/preload.js"),
             contextIsolation: true,
             nodeIntegration: false,
-            sandbox: false,
         },
     });
 
