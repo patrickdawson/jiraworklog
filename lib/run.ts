@@ -10,6 +10,7 @@ dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 import { table } from "table";
 import { getAuthorization } from "./auth.js";
+import { formatAxiosOrUnknownError } from "./format-http-error.js";
 import { postWorklogToJira, type PostWorklogParams } from "./jira-worklog.js";
 import { buildTogglImportPreview } from "./toggl-import.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "./booking-dates.js";
@@ -65,7 +66,8 @@ async function postToJira(
     try {
         await postWorklogToJira(params, dateToBook, authorization);
     } catch (err) {
-        console.error(`Failed to add worklog: Reason: ${(err as Error).message}`);
+        const detail = err instanceof Error ? err.message : formatAxiosOrUnknownError(err);
+        console.error(`Worklog konnte nicht gebucht werden: ${detail}`);
     }
 }
 

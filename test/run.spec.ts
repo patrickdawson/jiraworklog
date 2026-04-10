@@ -68,7 +68,9 @@ describe("run test", () => {
         // Time input, then message input (non-Sonstiges branch)
         mockInput().mockResolvedValueOnce("1d").mockResolvedValueOnce("message to book");
 
-        postScope = nock("http://jira").post("/rest/api/latest/issue/TXR-1234/worklog").reply(200);
+        postScope = nock("http://jira")
+            .post("/rest/api/latest/issue/TXR-1234/worklog")
+            .reply(201, { id: "10001" });
     });
 
     afterEach(() => {
