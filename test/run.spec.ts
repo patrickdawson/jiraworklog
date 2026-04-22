@@ -196,6 +196,47 @@ describe("run test", () => {
                 expect(summaryPostScope.pendingMocks()).toHaveLength(0);
             });
 
+            it("excludes direct summary-issue bookings from additional summary duration", async () => {
+                config.addTxpiv450SummaryEntry = true;
+                vi.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
+                    {
+                        issueKey: config.togglImportSummaryIssueKey,
+                        durationMin: 5,
+                        description: "Booked directly to summary issue",
+                    },
+                    { issueKey: "TXR-1234", durationMin: 10, description: "Regular issue work" },
+                ]);
+
+                nock.cleanAll();
+                const regularIssueScope = nock("http://jira")
+                    .post(
+                        "/rest/api/latest/issue/TXR-1234/worklog",
+                        (body) => body.timeSpent === "10m" && body.comment === "Regular issue work",
+                    )
+                    .reply(201, { id: "10011" });
+                const directSummaryScope = nock("http://jira")
+                    .post(
+                        `/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`,
+                        (body) =>
+                            body.timeSpent === "5m" &&
+                            body.comment === "Booked directly to summary issue",
+                    )
+                    .reply(201, { id: "10012" });
+                const summaryAggregateScope = nock("http://jira")
+                    .post(
+                        `/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`,
+                        (body) => body.timeSpent === "10m" && body.comment === undefined,
+                    )
+                    .reply(201, { id: "10013" });
+
+                await testModule.run();
+
+                expect(consoleErrorMock).toHaveBeenCalledTimes(0);
+                expect(regularIssueScope.pendingMocks()).toHaveLength(0);
+                expect(directSummaryScope.pendingMocks()).toHaveLength(0);
+                expect(summaryAggregateScope.pendingMocks()).toHaveLength(0);
+            });
+
             it("prints summary of worklog entries", async () => {
                 await testModule.run();
 

@@ -131,6 +131,10 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         );
     }
     const durationSum = totalMinutes;
+    const summaryDurationSum = _.sumBy(
+        workLogEntries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
+        "durationMin",
+    );
     console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
@@ -147,11 +151,11 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
             );
         }
 
-        if (config.addTxpiv450SummaryEntry && durationSum > 0) {
+        if (config.addTxpiv450SummaryEntry && summaryDurationSum > 0) {
             await postToJira(
                 {
                     issueKey: config.togglImportSummaryIssueKey,
-                    timeSpent: `${durationSum}m`,
+                    timeSpent: `${summaryDurationSum}m`,
                     message: undefined,
                 },
                 dateToBook,
