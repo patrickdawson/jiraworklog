@@ -146,6 +146,18 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
                 authorization,
             );
         }
+
+        if (config.addTxpiv450SummaryEntry && durationSum > 0) {
+            await postToJira(
+                {
+                    issueKey: config.togglImportSummaryIssueKey,
+                    timeSpent: `${durationSum}m`,
+                    message: undefined,
+                },
+                dateToBook,
+                authorization,
+            );
+        }
     }
 }
 

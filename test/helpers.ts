@@ -9,6 +9,8 @@ export function createMockConfig(overrides?: Partial<AppConfig>): AppConfig {
         jiraProjectKeys: [],
         togglUrl: "",
         togglWorkspace: "",
+        addTxpiv450SummaryEntry: false,
+        togglImportSummaryIssueKey: "TXPIV-450",
         ...overrides,
     };
 }

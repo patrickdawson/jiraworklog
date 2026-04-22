@@ -11,6 +11,8 @@ export interface AppConfig {
     togglUrl: string;
     togglWorkspace: string;
     jiraProjectKeys: string[];
+    addTxpiv450SummaryEntry: boolean;
+    togglImportSummaryIssueKey: string;
 }
 
 export interface TogglTimeEntry {
