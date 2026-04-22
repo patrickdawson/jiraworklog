@@ -42,6 +42,7 @@ const mockSearch = () => vi.mocked(inquirerPrompts.search) as any;
 
 describe("run test", () => {
     let postScope: nock.Scope;
+    let summaryPostScope: nock.Scope;
     let dayToBook: Dayjs;
 
     beforeAll(() => {
@@ -50,11 +51,13 @@ describe("run test", () => {
             createMockConfig({
                 jiraUrl: "http://jira",
                 issues: [{ name: "Sonstiges", value: "TXR-13128" }],
+                addTxpiv450SummaryEntry: false,
             }),
         );
     });
 
     beforeEach(() => {
+        config.addTxpiv450SummaryEntry = false;
         vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "user1" });
 
         dayToBook = dayjs().subtract(dayjs().weekday() === 0 ? 3 : 1, "days");
@@ -71,6 +74,9 @@ describe("run test", () => {
         postScope = nock("http://jira")
             .post("/rest/api/latest/issue/TXR-1234/worklog")
             .reply(201, { id: "10001" });
+        summaryPostScope = nock("http://jira")
+            .post(`/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`)
+            .reply(201, { id: "10002" });
     });
 
     afterEach(() => {
@@ -144,6 +150,7 @@ describe("run test", () => {
 
                 expect(consoleErrorMock).toHaveBeenCalledTimes(0);
                 expect(postScope.pendingMocks()).toHaveLength(0);
+                expect(summaryPostScope.pendingMocks()).toHaveLength(1);
             });
 
             it("does not post worklog to jira if sendToJira is false", async () => {
@@ -154,6 +161,7 @@ describe("run test", () => {
 
                 expect(consoleErrorMock).toHaveBeenCalledTimes(0);
                 expect(postScope.pendingMocks()).toHaveLength(1);
+                expect(summaryPostScope.pendingMocks()).toHaveLength(1);
             });
 
             it("does not post worklog to jira if an issueKey is undefined", async () => {
@@ -164,6 +172,7 @@ describe("run test", () => {
                 await testModule.run();
 
                 expect(postScope.pendingMocks()).toHaveLength(1);
+                expect(summaryPostScope.pendingMocks()).toHaveLength(1);
             });
 
             it("does only post valid worklog entries to jira", async () => {
@@ -175,6 +184,16 @@ describe("run test", () => {
                 await testModule.run();
 
                 expect(postScope.pendingMocks()).toHaveLength(0);
+                expect(summaryPostScope.pendingMocks()).toHaveLength(1);
+            });
+
+            it("posts an additional summary booking when enabled", async () => {
+                config.addTxpiv450SummaryEntry = true;
+
+                await testModule.run();
+
+                expect(postScope.pendingMocks()).toHaveLength(0);
+                expect(summaryPostScope.pendingMocks()).toHaveLength(0);
             });
 
             it("prints summary of worklog entries", async () => {

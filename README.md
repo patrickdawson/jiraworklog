@@ -49,6 +49,8 @@ As an alternative you could save your password in `JIRA_PASS` and omit the entry
 * Use toggl workspace with name `Zwick` (or change the workspace name in `config.json`)
 * Setup toggl projects according to `config.json` e.g. "Daily", "Sonstiges" etc. The names must match exactly.
 
+The main settings in `config.json` are: `issues` (maps Toggl project names to Jira issues), `jiraProjectKeys` (allowed issue key prefixes for parsing free-text entries), `maxLastIssues` / `maxLastDays` (CLI history limits), `jiraUrl`, `togglUrl`, `togglWorkspace`, `addTxpiv450SummaryEntry` (enables the additional summary booking), and `togglImportSummaryIssueKey` (target issue for that summary worklog, e.g. `TXPIV-450`).
+
 
 # How to format your toggl entries
 
