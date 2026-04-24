@@ -12,8 +12,6 @@ export function App(): JSX.Element {
     const [authError, setAuthError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    const [dateOptions, setDateOptions] = useState<{ text: string; iso: string }[]>([]);
-    const [defaultDateIdx, setDefaultDateIdx] = useState(1);
     const [selectedIso, setSelectedIso] = useState<string>("");
 
     const [useToggl, setUseToggl] = useState(true);
@@ -41,8 +39,6 @@ export function App(): JSX.Element {
             try {
                 await refreshSession();
                 const dates = await api.getBookingDates();
-                setDateOptions(dates.options);
-                setDefaultDateIdx(dates.defaultIndex);
                 const pick = dates.options[dates.defaultIndex];
                 if (pick) setSelectedIso(pick.iso);
                 const sk = await api.getSonstigesKey();
@@ -236,18 +232,12 @@ export function App(): JSX.Element {
                     <section className="panel">
                         <div className="section-title">Buchungstag</div>
                         <label htmlFor="date">Kalendertag</label>
-                        <select
+                        <input
+                            type="date"
                             id="date"
                             value={selectedIso}
                             onChange={(e) => setSelectedIso(e.target.value)}
-                        >
-                            {dateOptions.map((d, i) => (
-                                <option key={d.iso} value={d.iso}>
-                                    {d.text}
-                                    {i === defaultDateIdx ? " · Vorschlag" : ""}
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </section>
 
                     <div className="toggle">

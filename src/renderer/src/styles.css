@@ -142,6 +142,7 @@ button {
 
 input[type="text"],
 input[type="password"],
+input[type="date"],
 select {
     width: 100%;
     max-width: 100%;
@@ -153,6 +154,10 @@ select {
     transition:
         border-color 0.15s ease,
         box-shadow 0.15s ease;
+}
+
+input[type="date"] {
+    color-scheme: dark;
 }
 
 input:hover,
