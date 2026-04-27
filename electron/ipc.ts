@@ -1,8 +1,7 @@
 import { ipcMain } from "electron";
 import dayjs from "dayjs";
 import { resolveAuthorization } from "../lib/auth.js";
-import { postWorklogToJira } from "../lib/jira-worklog.js";
-import { buildTogglImportPreview } from "../lib/toggl-import.js";
+import { buildTogglImportPreview, postTogglImportToJira } from "../lib/toggl-import.js";
 import { submitManualWorklog } from "../lib/manual-worklog.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "../lib/booking-dates.js";
 import {
@@ -81,23 +80,8 @@ export function registerIpcHandlers(): void {
                 return { ok: false, errors: ["Not authenticated"] };
             }
             const dateToBook = dayjs(isoDate);
-            const { valid } = await buildTogglImportPreview(dateToBook);
-            const errors: string[] = [];
-            for (const entry of valid) {
-                try {
-                    await postWorklogToJira(
-                        {
-                            issueKey: entry.issueKey,
-                            timeSpent: `${entry.durationMin}m`,
-                            message: entry.description,
-                        },
-                        dateToBook,
-                        auth,
-                    );
-                } catch (e) {
-                    errors.push(`${entry.issueKey}: ${(e as Error).message}`);
-                }
-            }
+            const preview = await buildTogglImportPreview(dateToBook);
+            const { errors } = await postTogglImportToJira(auth, dateToBook, preview);
             return { ok: errors.length === 0, errors: errors.length ? errors : undefined };
         },
     );

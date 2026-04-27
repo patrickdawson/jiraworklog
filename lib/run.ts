@@ -12,7 +12,7 @@ import { table } from "table";
 import { getAuthorization } from "./auth.js";
 import { formatAxiosOrUnknownError } from "./format-http-error.js";
 import { postWorklogToJira, type PostWorklogParams } from "./jira-worklog.js";
-import { buildTogglImportPreview } from "./toggl-import.js";
+import { buildTogglImportPreview, postTogglImportToJira } from "./toggl-import.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "./booking-dates.js";
 import {
     filterIssueChoices,
@@ -135,32 +135,19 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         workLogEntries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
         "durationMin",
     );
-    console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
+    console.log(
+        `Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten) - Zeit auf ${config.togglImportSummaryIssueKey} in min: ${summaryDurationSum}`,
+    );
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
     if (sendToJira) {
-        for (const workLogEntry of workLogEntries) {
-            await postToJira(
-                {
-                    issueKey: workLogEntry.issueKey,
-                    timeSpent: `${workLogEntry.durationMin}m`,
-                    message: workLogEntry.description,
-                },
-                dateToBook,
-                authorization,
-            );
-        }
-
-        if (config.addTxpiv450SummaryEntry && summaryDurationSum > 0) {
-            await postToJira(
-                {
-                    issueKey: config.togglImportSummaryIssueKey,
-                    timeSpent: `${summaryDurationSum}m`,
-                    message: undefined,
-                },
-                dateToBook,
-                authorization,
-            );
+        const { errors } = await postTogglImportToJira(authorization, dateToBook, {
+            valid: workLogEntries,
+            invalid: invalidWorkLogEntries,
+            totalMinutes,
+        });
+        for (const err of errors) {
+            console.error(`Worklog konnte nicht gebucht werden: ${err}`);
         }
     }
 }
