@@ -1,4 +1,5 @@
 import { ipcMain } from "electron";
+import axios from "axios";
 import dayjs from "dayjs";
 import { resolveAuthorization } from "../lib/auth.js";
 import { buildTogglImportPreview, postTogglImportToJira } from "../lib/toggl-import.js";
@@ -11,6 +12,25 @@ import {
     setStoredUser,
 } from "../lib/issues.js";
 import { getSessionAuth, setSessionAuth } from "./session.js";
+
+function extractPreviewErrorMessage(err: unknown): string {
+    if (axios.isAxiosError(err)) {
+        const data = err.response?.data;
+        if (typeof data === "string" && data.trim().length > 0) {
+            return data;
+        }
+        if (data && typeof data === "object" && "data" in data) {
+            const nestedData = (data as { data?: unknown }).data;
+            if (typeof nestedData === "string" && nestedData.trim().length > 0) {
+                return nestedData;
+            }
+        }
+    }
+    if (err instanceof Error && err.message.trim().length > 0) {
+        return err.message;
+    }
+    return String(err);
+}
 
 function tryAuthFromEnv(): void {
     const token = process.env["JIRA_TOKEN"];
@@ -67,10 +87,24 @@ export function registerIpcHandlers(): void {
         };
     });
 
-    ipcMain.handle("toggl:preview", async (_, isoDate: string) => {
-        const dateToBook = dayjs(isoDate);
-        return buildTogglImportPreview(dateToBook);
-    });
+    ipcMain.handle(
+        "toggl:preview",
+        async (
+            _,
+            isoDate: string,
+        ): Promise<
+            | { ok: true; preview: Awaited<ReturnType<typeof buildTogglImportPreview>> }
+            | { ok: false; error: string }
+        > => {
+            try {
+                const dateToBook = dayjs(isoDate);
+                const preview = await buildTogglImportPreview(dateToBook);
+                return { ok: true, preview };
+            } catch (e) {
+                return { ok: false, error: extractPreviewErrorMessage(e) };
+            }
+        },
+    );
 
     ipcMain.handle(
         "toggl:post",

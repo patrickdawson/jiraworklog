@@ -17,6 +17,7 @@ export function App(): JSX.Element {
     const [useToggl, setUseToggl] = useState(true);
     const [preview, setPreview] = useState<TogglImportPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
     const [postMsg, setPostMsg] = useState<string | null>(null);
 
     const [issueQuery, setIssueQuery] = useState("");
@@ -52,10 +53,15 @@ export function App(): JSX.Element {
     const loadPreview = useCallback(async () => {
         if (!selectedIso) return;
         setPreviewLoading(true);
+        setPreviewError(null);
         setPostMsg(null);
         try {
-            const p = await api.previewToggl(selectedIso);
-            setPreview(p);
+            const response = await api.previewToggl(selectedIso);
+            if (response.ok) {
+                setPreview(response.preview);
+                return;
+            }
+            setPreviewError(response.error);
         } finally {
             setPreviewLoading(false);
         }
@@ -100,6 +106,7 @@ export function App(): JSX.Element {
         await api.logout();
         setHasAuth(false);
         setPreview(null);
+        setPreviewError(null);
     }
 
     async function handlePostToggl(): Promise<void> {
@@ -329,27 +336,27 @@ export function App(): JSX.Element {
                                         Summe: <strong>{preview.totalMinutes / 60}</strong> h (
                                         {preview.totalMinutes} Min)
                                     </p>
-                                    <div className="btn-row">
-                                        <button
-                                            type="button"
-                                            className="primary"
-                                            onClick={() => void handlePostToggl()}
-                                        >
-                                            In Jira buchen
-                                        </button>
-                                    </div>
-                                    {postMsg ? (
-                                        <p
-                                            className={
-                                                postMsg.includes("durchgeführt")
-                                                    ? "msg ok"
-                                                    : "msg error"
-                                            }
-                                        >
-                                            {postMsg}
-                                        </p>
-                                    ) : null}
                                 </>
+                            ) : null}
+                            <div className="btn-row">
+                                <button
+                                    type="button"
+                                    className="primary"
+                                    disabled={Boolean(previewError) || !preview}
+                                    onClick={() => void handlePostToggl()}
+                                >
+                                    In Jira buchen
+                                </button>
+                            </div>
+                            {previewError ? <p className="msg error">{previewError}</p> : null}
+                            {postMsg ? (
+                                <p
+                                    className={
+                                        postMsg.includes("durchgeführt") ? "msg ok" : "msg error"
+                                    }
+                                >
+                                    {postMsg}
+                                </p>
                             ) : null}
                         </section>
                     ) : (

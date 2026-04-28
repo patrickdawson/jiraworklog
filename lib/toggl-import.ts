@@ -27,16 +27,20 @@ export async function buildTogglImportPreview(dateToBook: Dayjs): Promise<TogglI
     return partitionTogglWorkEntries(workLogEntries);
 }
 
+export function getSummaryDurationMin(entries: WorkLogEntry[]): number {
+    return _.sumBy(
+        entries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
+        "durationMin",
+    );
+}
+
 export async function postTogglImportToJira(
     authorization: Authorization,
     dateToBook: Dayjs,
     preview: TogglImportPreview,
 ): Promise<{ errors: string[] }> {
     const errors: string[] = [];
-    const summaryDurationSum = _.sumBy(
-        preview.valid.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
-        "durationMin",
-    );
+    const summaryDurationSum = getSummaryDurationMin(preview.valid);
 
     for (const entry of preview.valid) {
         try {

@@ -15,7 +15,7 @@ declare global {
                 options: { text: string; iso: string }[];
                 defaultIndex: number;
             }>;
-            previewToggl: (isoDate: string) => Promise<import("./api-types").TogglImportPreview>;
+            previewToggl: (isoDate: string) => Promise<import("./api-types").TogglPreviewResponse>;
             postToggl: (isoDate: string) => Promise<{ ok: boolean; errors?: string[] }>;
             submitManual: (payload: {
                 isoDate: string;

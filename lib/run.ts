@@ -12,7 +12,11 @@ import { table } from "table";
 import { getAuthorization } from "./auth.js";
 import { formatAxiosOrUnknownError } from "./format-http-error.js";
 import { postWorklogToJira, type PostWorklogParams } from "./jira-worklog.js";
-import { buildTogglImportPreview, postTogglImportToJira } from "./toggl-import.js";
+import {
+    buildTogglImportPreview,
+    postTogglImportToJira,
+    getSummaryDurationMin,
+} from "./toggl-import.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "./booking-dates.js";
 import {
     filterIssueChoices,
@@ -116,6 +120,19 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         return [entry.issueKey, project, entry.durationMin, entry.description];
     });
 
+    if (config.addTxpiv450SummaryEntry) {
+        const summaryDurationMin = getSummaryDurationMin(workLogEntries);
+        if (summaryDurationMin > 0) {
+            const summaryProject = issueKeyToProject[config.togglImportSummaryIssueKey] || "Custom";
+            tableContent.push([
+                config.togglImportSummaryIssueKey,
+                summaryProject,
+                summaryDurationMin,
+                "(Sammelbuchung)",
+            ]);
+        }
+    }
+
     console.log("\nThe following entries will be logged to Jira:");
     console.log(table([["Project", "Issue", "Duration (min)", "Message"], ...tableContent]));
 
@@ -131,13 +148,7 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         );
     }
     const durationSum = totalMinutes;
-    const summaryDurationSum = _.sumBy(
-        workLogEntries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
-        "durationMin",
-    );
-    console.log(
-        `Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten) - Zeit auf ${config.togglImportSummaryIssueKey} in min: ${summaryDurationSum}`,
-    );
+    console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
     if (sendToJira) {

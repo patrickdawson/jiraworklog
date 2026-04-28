@@ -20,7 +20,11 @@ const api = {
             options: { text: string; iso: string }[];
             defaultIndex: number;
         }>,
-    previewToggl: (isoDate: string) => ipcRenderer.invoke("toggl:preview", isoDate),
+    previewToggl: (isoDate: string) =>
+        ipcRenderer.invoke("toggl:preview", isoDate) as Promise<
+            | { ok: true; preview: import("../lib/toggl-import.js").TogglImportPreview }
+            | { ok: false; error: string }
+        >,
     postToggl: (isoDate: string) =>
         ipcRenderer.invoke("toggl:post", isoDate) as Promise<{ ok: boolean; errors?: string[] }>,
     submitManual: (payload: ManualSubmitPayload) =>
