@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { remove, sumBy } from "lodash-es";
 import type { Dayjs } from "dayjs";
 import { getTimeEntries, convertToWorkLogEntries } from "./toggl.js";
 import { postWorklogToJira } from "./jira-worklog.js";
@@ -16,8 +16,8 @@ export type TogglImportPreview = {
  */
 export function partitionTogglWorkEntries(workLogEntries: WorkLogEntry[]): TogglImportPreview {
     const valid = [...workLogEntries];
-    const invalid = _.remove(valid, (w: WorkLogEntry) => w.issueKey === "undefined");
-    const totalMinutes = _.sumBy(valid, "durationMin");
+    const invalid = remove(valid, (w: WorkLogEntry) => w.issueKey === "undefined");
+    const totalMinutes = sumBy(valid, "durationMin");
     return { valid, invalid, totalMinutes };
 }
 
@@ -28,7 +28,7 @@ export async function buildTogglImportPreview(dateToBook: Dayjs): Promise<TogglI
 }
 
 export function getSummaryDurationMin(entries: WorkLogEntry[]): number {
-    return _.sumBy(
+    return sumBy(
         entries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
         "durationMin",
     );

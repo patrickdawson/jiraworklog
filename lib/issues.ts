@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { find, isNil, map } from "lodash-es";
 import Conf from "conf";
 import fuzzy from "fuzzy";
 import config from "../config.json" with { type: "json" };
@@ -14,12 +14,12 @@ export function getLastIssues(): string[] {
 }
 
 export function getAllIssues(getKeys?: boolean): string[] {
-    return [...getLastIssues(), ..._.map(config.issues, (i) => (getKeys ? i.value : i.name))];
+    return [...getLastIssues(), ...map(config.issues, (i) => (getKeys ? i.value : i.name))];
 }
 
 export function getIssueKeyByName(name: string): string {
-    const issue = _.find(config.issues, ["name", name]);
-    if (!_.isNil(issue)) {
+    const issue = find(config.issues, ["name", name]);
+    if (!isNil(issue)) {
         return issue.value;
     }
     throw new Error(`Issue with name '${name}' not found!`);

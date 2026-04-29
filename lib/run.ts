@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { find, includes, keyBy, map, mapValues } from "lodash-es";
 import { select, input, confirm, search } from "@inquirer/prompts";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -50,7 +50,7 @@ const getDateToBook = async (): Promise<Dayjs> => {
         default: lastDays[lastWorkdayIdx].text,
     });
 
-    const selectedDay = _.find(lastDays, ["text", selectedText]);
+    const selectedDay = find(lastDays, ["text", selectedText]);
     if (!selectedDay) {
         throw new Error(`Selected day "${selectedText}" not found in lastDays`);
     }
@@ -98,7 +98,7 @@ const addWorklog = async (authorization: Authorization, dateToBook: Dayjs): Prom
     }
 
     const allIssueKeys = getAllIssues(true);
-    if (!_.includes(allIssueKeys, issueSelection)) {
+    if (!includes(allIssueKeys, issueSelection)) {
         addToLastIssues(issueSelection);
     }
 
@@ -120,8 +120,8 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         invalid: invalidWorkLogEntries,
         totalMinutes,
     } = await buildTogglImportPreview(dateToBook);
-    const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
-    const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
+    const issueKeyToProject = mapValues(keyBy(config.issues, "value"), "name");
+    const tableContent = map(workLogEntries, (entry: WorkLogEntry) => {
         const project = issueKeyToProject[entry.issueKey] || "Benutzerdefiniert";
         return [
             entry.issueKey,
@@ -149,7 +149,7 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
     console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...tableContent]));
 
     if (invalidWorkLogEntries.length > 0) {
-        const invalidTableContent = _.map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
+        const invalidTableContent = map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
             const project = "Benutzerdefiniert";
             return [
                 entry.issueKey,
