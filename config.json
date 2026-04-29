@@ -91,6 +91,10 @@
         {
             "name": "Ideenmanagement",
             "value": "TXPIV-40"
+        },
+        {
+            "name": "Allgemeines",
+            "value": "TXPIV-450"
         }
     ],
     "maxLastIssues": 10,
