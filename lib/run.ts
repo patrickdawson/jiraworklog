@@ -71,7 +71,7 @@ async function postToJira(
         comment: params.message,
     };
 
-    console.log(`Book: '${JSON.stringify(postData)}' on issue '${params.issueKey}'`);
+    console.log(`Buche: '${JSON.stringify(postData)}' auf Issue '${params.issueKey}'`);
 
     try {
         await postWorklogToJira(params, dateToBook, authorization);
@@ -122,7 +122,7 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
     } = await buildTogglImportPreview(dateToBook);
     const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
     const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
-        const project = issueKeyToProject[entry.issueKey] || "Custom";
+        const project = issueKeyToProject[entry.issueKey] || "Benutzerdefiniert";
         return [
             entry.issueKey,
             project,
@@ -134,7 +134,8 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
     if (config.addTxpiv450SummaryEntry) {
         const summaryDurationMin = getSummaryDurationMin(workLogEntries);
         if (summaryDurationMin > 0) {
-            const summaryProject = issueKeyToProject[config.togglImportSummaryIssueKey] || "Custom";
+            const summaryProject =
+                issueKeyToProject[config.togglImportSummaryIssueKey] || "Benutzerdefiniert";
             tableContent.push([
                 config.togglImportSummaryIssueKey,
                 summaryProject,
@@ -144,12 +145,12 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         }
     }
 
-    console.log("\nThe following entries will be logged to Jira:");
-    console.log(table([["Project", "Issue", "Duration", "Message"], ...tableContent]));
+    console.log("\nDie folgenden Eintraege werden in Jira gebucht:");
+    console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...tableContent]));
 
     if (invalidWorkLogEntries.length > 0) {
         const invalidTableContent = _.map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
-            const project = "Custom";
+            const project = "Benutzerdefiniert";
             return [
                 entry.issueKey,
                 project,
@@ -158,8 +159,8 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
             ];
         });
 
-        console.log("Won't log the following entries to Jira:");
-        console.log(table([["Project", "Issue", "Duration", "Message"], ...invalidTableContent]));
+        console.log("Die folgenden Eintraege werden nicht in Jira gebucht:");
+        console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...invalidTableContent]));
     }
     const durationSum = totalMinutes;
     const totalHours = Math.floor(durationSum / 60);
@@ -181,7 +182,7 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
 
 const run = async (): Promise<void> => {
     try {
-        console.log("\nWilkommen beim JIRA worklog tool.");
+        console.log("\nWillkommen beim JIRA Worklog Tool.");
         const authorization = await getAuthorization({
             user: getStoredUser(),
             password: process.env["JIRA_PASS"],
@@ -203,7 +204,7 @@ const run = async (): Promise<void> => {
             await addWorklog(authorization, dateToBook);
         }
     } catch (error) {
-        console.error(error);
+        console.error("Unerwarteter Fehler:", error);
     }
 };
 

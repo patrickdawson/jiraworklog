@@ -93,7 +93,7 @@ describe("run test", () => {
         it("prints out the welcome message", async () => {
             await testModule.run();
             expect(consoleLogMock).toHaveBeenCalledWith(
-                expect.stringMatching(/.*Wilkommen beim JIRA worklog tool\..*/),
+                expect.stringMatching(/.*Willkommen beim JIRA Worklog Tool\..*/),
             );
         });
     });
@@ -241,10 +241,10 @@ describe("run test", () => {
                 await testModule.run();
 
                 expect(consoleLogMock).toHaveBeenCalledWith(
-                    expect.stringMatching(/TXR-1234 │ Custom │ 1/),
+                    expect.stringMatching(/TXR-1234.*Benutzerdefiniert.*1m/),
                 );
                 expect(consoleLogMock).toHaveBeenCalledWith(
-                    expect.stringMatching(/Zeit insgesamt: 0.01.*Stunden \(1 Minuten\)/),
+                    expect.stringMatching(/Zeit insgesamt: 1m \(1 Minuten\)/),
                 );
             });
         });
