@@ -284,7 +284,7 @@ export function App(): JSX.Element {
                                             <thead>
                                                 <tr>
                                                     <th>Issue</th>
-                                                    <th>Min</th>
+                                                    <th>Dauer</th>
                                                     <th>Text</th>
                                                 </tr>
                                             </thead>
@@ -294,7 +294,7 @@ export function App(): JSX.Element {
                                                         key={`v-${r.issueKey}-${i}-${r.description.slice(0, 20)}`}
                                                     >
                                                         <td>{r.issueKey}</td>
-                                                        <td>{r.durationMin}</td>
+                                                        <td>{r.durationFormatted}</td>
                                                         <td>{r.description}</td>
                                                     </tr>
                                                 ))}
@@ -313,7 +313,7 @@ export function App(): JSX.Element {
                                                     <thead>
                                                         <tr>
                                                             <th>Issue</th>
-                                                            <th>Min</th>
+                                                            <th>Dauer</th>
                                                             <th>Text</th>
                                                         </tr>
                                                     </thead>
@@ -323,7 +323,7 @@ export function App(): JSX.Element {
                                                                 key={`inv-${r.issueKey}-${i}-${r.description.slice(0, 20)}`}
                                                             >
                                                                 <td>{r.issueKey}</td>
-                                                                <td>{r.durationMin}</td>
+                                                                <td>{r.durationFormatted}</td>
                                                                 <td>{r.description}</td>
                                                             </tr>
                                                         ))}
@@ -333,8 +333,8 @@ export function App(): JSX.Element {
                                         </>
                                     ) : null}
                                     <p className="msg">
-                                        Summe: <strong>{preview.totalMinutes / 60}</strong> h (
-                                        {preview.totalMinutes} Min)
+                                        Summe: <strong>{preview.totalFormatted}</strong> (
+                                        {preview.totalMinutes} Minuten)
                                     </p>
                                 </>
                             ) : null}

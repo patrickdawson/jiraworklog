@@ -22,7 +22,7 @@ const api = {
         }>,
     previewToggl: (isoDate: string) =>
         ipcRenderer.invoke("toggl:preview", isoDate) as Promise<
-            | { ok: true; preview: import("../lib/toggl-import.js").TogglImportPreview }
+            | { ok: true; preview: import("../lib/toggl-import.js").TogglImportDisplayPreview }
             | { ok: false; error: string }
         >,
     postToggl: (isoDate: string) =>

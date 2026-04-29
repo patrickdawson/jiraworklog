@@ -2,6 +2,7 @@ import { remove, sumBy } from "lodash-es";
 import type { Dayjs } from "dayjs";
 import { getTimeEntries, convertToWorkLogEntries } from "./toggl.js";
 import { postWorklogToJira } from "./jira-worklog.js";
+import { formatDurationHoursMinutes } from "./duration.js";
 import type { Authorization, WorkLogEntry } from "./types.js";
 import config from "../config.json" with { type: "json" };
 
@@ -9,6 +10,16 @@ export type TogglImportPreview = {
     valid: WorkLogEntry[];
     invalid: WorkLogEntry[];
     totalMinutes: number;
+};
+
+export type FormattedWorkLogEntry = WorkLogEntry & {
+    durationFormatted: string;
+};
+
+export type TogglImportDisplayPreview = Omit<TogglImportPreview, "valid" | "invalid"> & {
+    valid: FormattedWorkLogEntry[];
+    invalid: FormattedWorkLogEntry[];
+    totalFormatted: string;
 };
 
 /**
@@ -25,6 +36,20 @@ export async function buildTogglImportPreview(dateToBook: Dayjs): Promise<TogglI
     const timeEntries = await getTimeEntries(dateToBook);
     const workLogEntries = convertToWorkLogEntries(timeEntries);
     return partitionTogglWorkEntries(workLogEntries);
+}
+
+export function formatTogglImportPreview(preview: TogglImportPreview): TogglImportDisplayPreview {
+    const formatEntry = (entry: WorkLogEntry): FormattedWorkLogEntry => ({
+        ...entry,
+        durationFormatted: formatDurationHoursMinutes(entry.durationMin),
+    });
+
+    return {
+        ...preview,
+        valid: preview.valid.map(formatEntry),
+        invalid: preview.invalid.map(formatEntry),
+        totalFormatted: formatDurationHoursMinutes(preview.totalMinutes),
+    };
 }
 
 export function getSummaryDurationMin(entries: WorkLogEntry[]): number {

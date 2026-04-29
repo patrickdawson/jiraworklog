@@ -5,6 +5,7 @@ import type { Dayjs } from "dayjs";
 import weekday from "dayjs/plugin/weekday.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
 import "dayjs/locale/de.js";
+import { formatDurationHoursMinutes } from "./duration.js";
 
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -33,12 +34,6 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 dayjs.locale("de");
 
 const searchKnownIssues = async (term: string | void) => filterIssueChoices(term);
-
-const formatDurationHoursMinutes = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m`;
-};
 
 const getDateToBook = async (): Promise<Dayjs> => {
     const lastDays = getBookingDateOptions();
@@ -163,9 +158,9 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...invalidTableContent]));
     }
     const durationSum = totalMinutes;
-    const totalHours = Math.floor(durationSum / 60);
-    const remainingMinutes = durationSum % 60;
-    console.log(`Zeit insgesamt: ${totalHours}h ${remainingMinutes}m (${durationSum} Minuten)`);
+    console.log(
+        `Zeit insgesamt: ${formatDurationHoursMinutes(durationSum)} (${durationSum} Minuten)`,
+    );
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
     if (sendToJira) {
