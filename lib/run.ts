@@ -34,6 +34,12 @@ dayjs.locale("de");
 
 const searchKnownIssues = async (term: string | void) => filterIssueChoices(term);
 
+const formatDurationHoursMinutes = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+};
+
 const getDateToBook = async (): Promise<Dayjs> => {
     const lastDays = getBookingDateOptions();
     const lastWorkdayIdx = getDefaultBookingDateIndex();
@@ -117,7 +123,12 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
     const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
     const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
         const project = issueKeyToProject[entry.issueKey] || "Custom";
-        return [entry.issueKey, project, entry.durationMin, entry.description];
+        return [
+            entry.issueKey,
+            project,
+            formatDurationHoursMinutes(entry.durationMin),
+            entry.description,
+        ];
     });
 
     if (config.addTxpiv450SummaryEntry) {
@@ -127,28 +138,33 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
             tableContent.push([
                 config.togglImportSummaryIssueKey,
                 summaryProject,
-                summaryDurationMin,
+                formatDurationHoursMinutes(summaryDurationMin),
                 "(Sammelbuchung)",
             ]);
         }
     }
 
     console.log("\nThe following entries will be logged to Jira:");
-    console.log(table([["Project", "Issue", "Duration (min)", "Message"], ...tableContent]));
+    console.log(table([["Project", "Issue", "Duration", "Message"], ...tableContent]));
 
     if (invalidWorkLogEntries.length > 0) {
         const invalidTableContent = _.map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
             const project = "Custom";
-            return [entry.issueKey, project, entry.durationMin, entry.description];
+            return [
+                entry.issueKey,
+                project,
+                formatDurationHoursMinutes(entry.durationMin),
+                entry.description,
+            ];
         });
 
         console.log("Won't log the following entries to Jira:");
-        console.log(
-            table([["Project", "Issue", "Duration (min)", "Message"], ...invalidTableContent]),
-        );
+        console.log(table([["Project", "Issue", "Duration", "Message"], ...invalidTableContent]));
     }
     const durationSum = totalMinutes;
-    console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
+    const totalHours = Math.floor(durationSum / 60);
+    const remainingMinutes = durationSum % 60;
+    console.log(`Zeit insgesamt: ${totalHours}h ${remainingMinutes}m (${durationSum} Minuten)`);
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
     if (sendToJira) {
