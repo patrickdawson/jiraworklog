@@ -2,7 +2,12 @@ import { ipcMain } from "electron";
 import axios from "axios";
 import dayjs from "dayjs";
 import { resolveAuthorization } from "../lib/auth.js";
-import { buildTogglImportPreview, postTogglImportToJira } from "../lib/toggl-import.js";
+import {
+    buildTogglImportPreview,
+    formatTogglImportPreview,
+    postTogglImportToJira,
+    type TogglImportDisplayPreview,
+} from "../lib/toggl-import.js";
 import { submitManualWorklog } from "../lib/manual-worklog.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "../lib/booking-dates.js";
 import {
@@ -93,13 +98,12 @@ export function registerIpcHandlers(): void {
             _,
             isoDate: string,
         ): Promise<
-            | { ok: true; preview: Awaited<ReturnType<typeof buildTogglImportPreview>> }
-            | { ok: false; error: string }
+            { ok: true; preview: TogglImportDisplayPreview } | { ok: false; error: string }
         > => {
             try {
                 const dateToBook = dayjs(isoDate);
                 const preview = await buildTogglImportPreview(dateToBook);
-                return { ok: true, preview };
+                return { ok: true, preview: formatTogglImportPreview(preview) };
             } catch (e) {
                 return { ok: false, error: extractPreviewErrorMessage(e) };
             }

@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { includes } from "lodash-es";
 import type { Dayjs } from "dayjs";
 import { postWorklogToJira } from "./jira-worklog.js";
 import { addToLastIssues, getAllIssues } from "./issues.js";
@@ -16,7 +16,7 @@ export async function submitManualWorklog(
     input: ManualWorklogInput,
 ): Promise<void> {
     const allIssueKeys = getAllIssues(true);
-    if (!_.includes(allIssueKeys, input.issueKey)) {
+    if (!includes(allIssueKeys, input.issueKey)) {
         addToLastIssues(input.issueKey);
     }
     await postWorklogToJira(

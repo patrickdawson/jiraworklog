@@ -99,7 +99,7 @@ function broadcast(event: string, data: object): void {
 }
 
 function parseAuth(header: string | undefined): string {
-    if (!header) return "anonymous";
+    if (!header) return "anonym";
     if (header.startsWith("Bearer ")) {
         const token = header.slice(7);
         return `token:${token.slice(0, 8)}…`;
@@ -209,11 +209,11 @@ app.get("/events", (req: Request, res: Response) => {
     res.write(`event: users\ndata: ${JSON.stringify(getUserList())}\n\n`);
 
     sseClients.add(res);
-    console.log(`\x1b[36m SSE\x1b[0m client connected (${sseClients.size} total)`);
+    console.log(`\x1b[36m SSE\x1b[0m Client verbunden (${sseClients.size} insgesamt)`);
 
     req.on("close", () => {
         sseClients.delete(res);
-        console.log(`\x1b[36m SSE\x1b[0m client disconnected (${sseClients.size} remaining)`);
+        console.log(`\x1b[36m SSE\x1b[0m Client getrennt (${sseClients.size} verbleibend)`);
     });
 });
 
@@ -222,10 +222,10 @@ app.delete("/api/worklogs", (_req: Request, res: Response) => {
     worklogs = [];
     nextId = 1;
     broadcast("clear", {});
-    console.log("[-] All worklogs cleared");
+    console.log("[-] Alle Worklogs geloescht");
     res.status(204).end();
 });
 
 app.listen(PORT, () => {
-    console.log(`Jira Worklog Simulator running at http://localhost:${PORT}`);
+    console.log(`Jira-Worklog-Simulator laeuft unter http://localhost:${PORT}`);
 });

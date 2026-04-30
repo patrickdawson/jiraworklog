@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { compact, find, groupBy, map, mapValues, reduce, sumBy, uniq, values } from "lodash-es";
 import axios from "axios";
 import type { Dayjs } from "dayjs";
 import config from "../config.json" with { type: "json" };
@@ -14,7 +14,7 @@ import type {
 const password = "api_token";
 
 const createDescription = (collection: object[], key: string): string =>
-    _.uniq(_.compact(_.map(collection, key))).join(", ");
+    uniq(compact(map(collection, key))).join(", ");
 
 async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
     const { data: workspacesData } = await axios.get<TogglWorkspace[]>(
@@ -24,7 +24,7 @@ async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
         },
     );
 
-    const workspaceId = _.find(workspacesData, ["name", config.togglWorkspace])?.id;
+    const workspaceId = find(workspacesData, ["name", config.togglWorkspace])?.id;
     if (!workspaceId) {
         throw new Error(
             `Workspace id for workspace ${config.togglWorkspace} not found. Please check your config!`,
@@ -37,7 +37,7 @@ async function getProjectsIdToNameDict(): Promise<ProjectIdToNameDict> {
             auth: { username: process.env.TOGGL_API_TOKEN!, password },
         },
     );
-    return _.reduce(
+    return reduce(
         body,
         (acc: ProjectIdToNameDict, project: TogglProject) => {
             acc[project.id] = project.name;
@@ -62,7 +62,7 @@ async function getTimeEntries(dateToBook: Dayjs): Promise<TogglTimeEntry[]> {
             },
         },
     );
-    return _.map(body, (entry: TogglApiTimeEntry) => ({
+    return map(body, (entry: TogglApiTimeEntry) => ({
         description: entry.description,
         project: entry.project_id !== null ? dict[entry.project_id] : undefined,
         duration: entry.duration,
@@ -70,11 +70,11 @@ async function getTimeEntries(dateToBook: Dayjs): Promise<TogglTimeEntry[]> {
 }
 
 function convertToWorkLogEntries(timeEntries: TogglTimeEntry[]): WorkLogEntry[] {
-    const knownProjects = _.map(config.issues, (issue) => issue.name);
-    const entriesWithIssueKey = _.map(timeEntries, (entry) => {
+    const knownProjects = map(config.issues, (issue) => issue.name);
+    const entriesWithIssueKey = map(timeEntries, (entry) => {
         let issueKey: string | undefined;
         if (knownProjects.includes(entry.project ?? "")) {
-            issueKey = _.find(config.issues, ["name", entry.project])?.value;
+            issueKey = find(config.issues, ["name", entry.project])?.value;
         } else {
             const regex = new RegExp(
                 `(.*)((?:${config.jiraProjectKeys.join("|")})-\\d+)\\s*(.*)`,
@@ -91,9 +91,9 @@ function convertToWorkLogEntries(timeEntries: TogglTimeEntry[]): WorkLogEntry[] 
             issueKey,
         };
     });
-    const grouped = _.groupBy(entriesWithIssueKey, "issueKey");
-    const result = _.mapValues(grouped, (entryGroup, key) => {
-        const duration = _.sumBy(entryGroup, "duration");
+    const grouped = groupBy(entriesWithIssueKey, "issueKey");
+    const result = mapValues(grouped, (entryGroup, key) => {
+        const duration = sumBy(entryGroup, "duration");
 
         return {
             issueKey: key,
@@ -101,7 +101,7 @@ function convertToWorkLogEntries(timeEntries: TogglTimeEntry[]): WorkLogEntry[] 
             description: createDescription(entryGroup, "description"),
         };
     });
-    return _.values(result);
+    return values(result);
 }
 
 // Idee: Text vor Issue No ist Titel und wird ignoriert, Text nach IssueNo wird Description

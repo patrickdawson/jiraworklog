@@ -1,7 +1,8 @@
-import _ from "lodash";
+import { remove, sumBy } from "lodash-es";
 import type { Dayjs } from "dayjs";
 import { getTimeEntries, convertToWorkLogEntries } from "./toggl.js";
 import { postWorklogToJira } from "./jira-worklog.js";
+import { formatDurationHoursMinutes } from "./duration.js";
 import type { Authorization, WorkLogEntry } from "./types.js";
 import config from "../config.json" with { type: "json" };
 
@@ -11,13 +12,23 @@ export type TogglImportPreview = {
     totalMinutes: number;
 };
 
+export type FormattedWorkLogEntry = WorkLogEntry & {
+    durationFormatted: string;
+};
+
+export type TogglImportDisplayPreview = Omit<TogglImportPreview, "valid" | "invalid"> & {
+    valid: FormattedWorkLogEntry[];
+    invalid: FormattedWorkLogEntry[];
+    totalFormatted: string;
+};
+
 /**
  * Splits converted worklog rows into postable vs invalid (undefined issue key), and sums minutes.
  */
 export function partitionTogglWorkEntries(workLogEntries: WorkLogEntry[]): TogglImportPreview {
     const valid = [...workLogEntries];
-    const invalid = _.remove(valid, (w: WorkLogEntry) => w.issueKey === "undefined");
-    const totalMinutes = _.sumBy(valid, "durationMin");
+    const invalid = remove(valid, (w: WorkLogEntry) => w.issueKey === "undefined");
+    const totalMinutes = sumBy(valid, "durationMin");
     return { valid, invalid, totalMinutes };
 }
 
@@ -27,8 +38,22 @@ export async function buildTogglImportPreview(dateToBook: Dayjs): Promise<TogglI
     return partitionTogglWorkEntries(workLogEntries);
 }
 
+export function formatTogglImportPreview(preview: TogglImportPreview): TogglImportDisplayPreview {
+    const formatEntry = (entry: WorkLogEntry): FormattedWorkLogEntry => ({
+        ...entry,
+        durationFormatted: formatDurationHoursMinutes(entry.durationMin),
+    });
+
+    return {
+        ...preview,
+        valid: preview.valid.map(formatEntry),
+        invalid: preview.invalid.map(formatEntry),
+        totalFormatted: formatDurationHoursMinutes(preview.totalMinutes),
+    };
+}
+
 export function getSummaryDurationMin(entries: WorkLogEntry[]): number {
-    return _.sumBy(
+    return sumBy(
         entries.filter((entry) => entry.issueKey !== config.togglImportSummaryIssueKey),
         "durationMin",
     );

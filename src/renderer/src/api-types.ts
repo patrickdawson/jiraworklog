@@ -1,7 +1,18 @@
 export type TogglImportPreview = {
-    valid: { issueKey: string; durationMin: number; description: string }[];
-    invalid: { issueKey: string; durationMin: number; description: string }[];
+    valid: {
+        issueKey: string;
+        durationMin: number;
+        description: string;
+        durationFormatted: string;
+    }[];
+    invalid: {
+        issueKey: string;
+        durationMin: number;
+        description: string;
+        durationFormatted: string;
+    }[];
     totalMinutes: number;
+    totalFormatted: string;
 };
 
 export type TogglPreviewResponse =

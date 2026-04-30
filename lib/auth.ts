@@ -23,7 +23,7 @@ async function checkCredentials(
             },
         );
         if (!options.silent) {
-            console.log(`-> Hello ${data.displayName}. Your credentials are correct.`);
+            console.log(`-> Hallo ${data.displayName}. Ihre Zugangsdaten sind korrekt.`);
         }
         return true;
     } catch (err) {
@@ -65,7 +65,7 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
 
     // re-try if credentials are wrong
     if (!(await checkCredentials(credentials))) {
-        console.log("Given username / password was incorrect. Try again.");
+        console.log("Der angegebene Benutzername / Passwort ist falsch. Bitte erneut versuchen.");
         return await getAuthorization(defaults);
     }
 

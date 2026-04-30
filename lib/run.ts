@@ -1,10 +1,11 @@
-import _ from "lodash";
+import { find, includes, keyBy, map, mapValues } from "lodash-es";
 import { select, input, confirm, search } from "@inquirer/prompts";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import weekday from "dayjs/plugin/weekday.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
 import "dayjs/locale/de.js";
+import { formatDurationHoursMinutes } from "./duration.js";
 
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -44,7 +45,7 @@ const getDateToBook = async (): Promise<Dayjs> => {
         default: lastDays[lastWorkdayIdx].text,
     });
 
-    const selectedDay = _.find(lastDays, ["text", selectedText]);
+    const selectedDay = find(lastDays, ["text", selectedText]);
     if (!selectedDay) {
         throw new Error(`Selected day "${selectedText}" not found in lastDays`);
     }
@@ -65,7 +66,7 @@ async function postToJira(
         comment: params.message,
     };
 
-    console.log(`Book: '${JSON.stringify(postData)}' on issue '${params.issueKey}'`);
+    console.log(`Buche: '${JSON.stringify(postData)}' auf Issue '${params.issueKey}'`);
 
     try {
         await postWorklogToJira(params, dateToBook, authorization);
@@ -92,7 +93,7 @@ const addWorklog = async (authorization: Authorization, dateToBook: Dayjs): Prom
     }
 
     const allIssueKeys = getAllIssues(true);
-    if (!_.includes(allIssueKeys, issueSelection)) {
+    if (!includes(allIssueKeys, issueSelection)) {
         addToLastIssues(issueSelection);
     }
 
@@ -114,41 +115,52 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
         invalid: invalidWorkLogEntries,
         totalMinutes,
     } = await buildTogglImportPreview(dateToBook);
-    const issueKeyToProject = _.mapValues(_.keyBy(config.issues, "value"), "name");
-    const tableContent = _.map(workLogEntries, (entry: WorkLogEntry) => {
-        const project = issueKeyToProject[entry.issueKey] || "Custom";
-        return [entry.issueKey, project, entry.durationMin, entry.description];
+    const issueKeyToProject = mapValues(keyBy(config.issues, "value"), "name");
+    const tableContent = map(workLogEntries, (entry: WorkLogEntry) => {
+        const project = issueKeyToProject[entry.issueKey] || "Benutzerdefiniert";
+        return [
+            entry.issueKey,
+            project,
+            formatDurationHoursMinutes(entry.durationMin),
+            entry.description,
+        ];
     });
 
     if (config.addTxpiv450SummaryEntry) {
         const summaryDurationMin = getSummaryDurationMin(workLogEntries);
         if (summaryDurationMin > 0) {
-            const summaryProject = issueKeyToProject[config.togglImportSummaryIssueKey] || "Custom";
+            const summaryProject =
+                issueKeyToProject[config.togglImportSummaryIssueKey] || "Benutzerdefiniert";
             tableContent.push([
                 config.togglImportSummaryIssueKey,
                 summaryProject,
-                summaryDurationMin,
+                formatDurationHoursMinutes(summaryDurationMin),
                 "(Sammelbuchung)",
             ]);
         }
     }
 
-    console.log("\nThe following entries will be logged to Jira:");
-    console.log(table([["Project", "Issue", "Duration (min)", "Message"], ...tableContent]));
+    console.log("\nDie folgenden Eintraege werden in Jira gebucht:");
+    console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...tableContent]));
 
     if (invalidWorkLogEntries.length > 0) {
-        const invalidTableContent = _.map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
-            const project = "Custom";
-            return [entry.issueKey, project, entry.durationMin, entry.description];
+        const invalidTableContent = map(invalidWorkLogEntries, (entry: WorkLogEntry) => {
+            const project = "Benutzerdefiniert";
+            return [
+                entry.issueKey,
+                project,
+                formatDurationHoursMinutes(entry.durationMin),
+                entry.description,
+            ];
         });
 
-        console.log("Won't log the following entries to Jira:");
-        console.log(
-            table([["Project", "Issue", "Duration (min)", "Message"], ...invalidTableContent]),
-        );
+        console.log("Die folgenden Eintraege werden nicht in Jira gebucht:");
+        console.log(table([["Issue", "Projekt", "Dauer", "Beschreibung"], ...invalidTableContent]));
     }
     const durationSum = totalMinutes;
-    console.log(`Zeit insgesamt: ${durationSum / 60} Stunden (${durationSum} Minuten)`);
+    console.log(
+        `Zeit insgesamt: ${formatDurationHoursMinutes(durationSum)} (${durationSum} Minuten)`,
+    );
 
     const sendToJira = await confirm({ message: "Soll die Buchung in Jira durchgeführt werden?" });
     if (sendToJira) {
@@ -165,7 +177,7 @@ async function importToggl(authorization: Authorization, dateToBook: Dayjs): Pro
 
 const run = async (): Promise<void> => {
     try {
-        console.log("\nWilkommen beim JIRA worklog tool.");
+        console.log("\nWillkommen beim JIRA Worklog Tool.");
         const authorization = await getAuthorization({
             user: getStoredUser(),
             password: process.env["JIRA_PASS"],
@@ -187,7 +199,7 @@ const run = async (): Promise<void> => {
             await addWorklog(authorization, dateToBook);
         }
     } catch (error) {
-        console.error(error);
+        console.error("Unerwarteter Fehler:", error);
     }
 };
 
