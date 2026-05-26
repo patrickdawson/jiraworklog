@@ -58,7 +58,10 @@ describe("run test", () => {
 
     beforeEach(() => {
         config.addTxpiv450SummaryEntry = false;
-        vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "user1" });
+        vi.mocked(auth.getAuthorization).mockResolvedValue({
+            user: "user1",
+            password: "secret",
+        });
 
         dayToBook = dayjs().subtract(dayjs().weekday() === 0 ? 3 : 1, "days");
 
@@ -72,10 +75,10 @@ describe("run test", () => {
         mockInput().mockResolvedValueOnce("1d").mockResolvedValueOnce("message to book");
 
         postScope = nock("http://jira")
-            .post("/rest/api/latest/issue/TXR-1234/worklog")
+            .post("/rest/api/2/issue/TXR-1234/worklog")
             .reply(201, { id: "10001" });
         summaryPostScope = nock("http://jira")
-            .post(`/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`)
+            .post(`/rest/api/2/issue/${config.togglImportSummaryIssueKey}/worklog`)
             .reply(201, { id: "10002" });
     });
 
@@ -100,7 +103,10 @@ describe("run test", () => {
 
     describe("auth", () => {
         it("sets returned user of getCredentials into configstore", async () => {
-            vi.mocked(auth.getAuthorization).mockResolvedValue({ user: "newUser" });
+            vi.mocked(auth.getAuthorization).mockResolvedValue({
+                user: "newUser",
+                password: "secret",
+            });
             await testModule.run();
             expect(vi.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
         });
@@ -210,13 +216,13 @@ describe("run test", () => {
                 nock.cleanAll();
                 const regularIssueScope = nock("http://jira")
                     .post(
-                        "/rest/api/latest/issue/TXR-1234/worklog",
+                        "/rest/api/2/issue/TXR-1234/worklog",
                         (body) => body.timeSpent === "10m" && body.comment === "Regular issue work",
                     )
                     .reply(201, { id: "10011" });
                 const directSummaryScope = nock("http://jira")
                     .post(
-                        `/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`,
+                        `/rest/api/2/issue/${config.togglImportSummaryIssueKey}/worklog`,
                         (body) =>
                             body.timeSpent === "5m" &&
                             body.comment === "Booked directly to summary issue",
@@ -224,7 +230,7 @@ describe("run test", () => {
                     .reply(201, { id: "10012" });
                 const summaryAggregateScope = nock("http://jira")
                     .post(
-                        `/rest/api/latest/issue/${config.togglImportSummaryIssueKey}/worklog`,
+                        `/rest/api/2/issue/${config.togglImportSummaryIssueKey}/worklog`,
                         (body) => body.timeSpent === "10m" && body.comment === undefined,
                     )
                     .reply(201, { id: "10013" });

@@ -38,9 +38,10 @@ function extractPreviewErrorMessage(err: unknown): string {
 }
 
 function tryAuthFromEnv(): void {
-    const token = process.env["JIRA_TOKEN"];
-    if (token && !getSessionAuth()) {
-        setSessionAuth(`Bearer ${token}`);
+    const token = process.env["JIRA_TOKEN"]?.trim();
+    const user = process.env["JIRA_USER"]?.trim() || getStoredUser();
+    if (token && user && !getSessionAuth()) {
+        setSessionAuth({ user, password: token });
     }
 }
 
@@ -63,7 +64,7 @@ export function registerIpcHandlers(): void {
                 if (typeof auth !== "string") {
                     setStoredUser(auth.user);
                 }
-                return { ok: true, user: typeof auth === "string" ? undefined : auth.user };
+                return { ok: true, user: auth.user };
             } catch (e) {
                 return { ok: false, error: (e as Error).message };
             }

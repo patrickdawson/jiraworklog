@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { Dayjs } from "dayjs";
-import config from "../config.json" with { type: "json" };
 import { formatAxiosOrUnknownError } from "./format-http-error.js";
+import { buildJiraApiUrl, getJiraAxiosConfig } from "./jira-http.js";
 import type { Authorization } from "./types.js";
 
 export type PostWorklogParams = {
@@ -18,19 +18,14 @@ export async function postWorklogToJira(
     const postData = {
         timeSpent,
         started: dateToBook.toISOString().replace("Z", "+0000"),
-        comment: message,
+        ...(message ? { comment: message } : {}),
     };
 
-    const authConfig =
-        typeof authorization === "string"
-            ? { headers: { Authorization: authorization } }
-            : { auth: { username: authorization.user, password: authorization.password! } };
-
-    const url = `${config.jiraUrl}/rest/api/latest/issue/${issueKey}/worklog`;
+    const url = buildJiraApiUrl(`/issue/${issueKey}/worklog`);
 
     try {
         await axios.post(url, postData, {
-            ...authConfig,
+            ...getJiraAxiosConfig(authorization),
             maxRedirects: 0,
         });
     } catch (err) {

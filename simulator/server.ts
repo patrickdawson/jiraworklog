@@ -170,8 +170,7 @@ app.delete("/api/users/:username", (req: Request, res: Response) => {
     res.status(204).end();
 });
 
-// POST /rest/api/latest/issue/:issueKey/worklog — submit worklog
-app.post<{ issueKey: string }>("/rest/api/latest/issue/:issueKey/worklog", (req, res) => {
+function postWorklog(req: Request<{ issueKey: string }>, res: Response): void {
     const { issueKey } = req.params;
     const { timeSpent, started, comment } = req.body as {
         timeSpent?: string;
@@ -195,7 +194,11 @@ app.post<{ issueKey: string }>("/rest/api/latest/issue/:issueKey/worklog", (req,
 
     console.log(`[+] Worklog: ${issueKey} | ${timeSpent} | ${started}`);
     res.status(201).json({ id: entry.id });
-});
+}
+
+// POST /rest/api/2/issue/:issueKey/worklog — submit worklog (Jira Cloud)
+app.post<{ issueKey: string }>("/rest/api/2/issue/:issueKey/worklog", postWorklog);
+app.post<{ issueKey: string }>("/rest/api/latest/issue/:issueKey/worklog", postWorklog);
 
 // GET /events — SSE endpoint
 app.get("/events", (req: Request, res: Response) => {

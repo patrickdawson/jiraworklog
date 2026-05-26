@@ -179,13 +179,13 @@ export function App(): JSX.Element {
                 <section className="panel">
                     <div className="section-title">Anmeldung</div>
                     <p className="hint">
-                        Optional: <code>JIRA_TOKEN</code> in der Umgebung. Sonst API-Token oder
-                        Benutzername und Passwort.
+                        Jira Cloud: Atlassian-E-Mail und API-Token. Optional <code>JIRA_USER</code>{" "}
+                        und <code>JIRA_TOKEN</code> in der Umgebung.
                     </p>
                     <form onSubmit={(e) => void handleLogin(e)}>
                         <div className="row">
                             <div className="field">
-                                <label htmlFor="token">Jira API-Token (PAT)</label>
+                                <label htmlFor="token">Jira API-Token</label>
                                 <input
                                     id="token"
                                     type="password"
@@ -197,7 +197,7 @@ export function App(): JSX.Element {
                         </div>
                         <div className="row">
                             <div className="field">
-                                <label htmlFor="user">Benutzer</label>
+                                <label htmlFor="user">Atlassian E-Mail</label>
                                 <input
                                     id="user"
                                     value={user}
@@ -206,7 +206,7 @@ export function App(): JSX.Element {
                                 />
                             </div>
                             <div className="field">
-                                <label htmlFor="pass">Passwort</label>
+                                <label htmlFor="pass">API-Token</label>
                                 <input
                                     id="pass"
                                     type="password"

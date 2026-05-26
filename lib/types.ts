@@ -27,7 +27,8 @@ export interface WorkLogEntry {
     description: string;
 }
 
-export type Authorization = string | { user: string; password?: string };
+/** Jira Cloud: Atlassian account email + API token (Basic auth). */
+export type Authorization = { user: string; password: string };
 
 export interface AuthDefaults {
     user?: string;

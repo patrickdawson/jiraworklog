@@ -183,9 +183,7 @@ const run = async (): Promise<void> => {
             password: process.env["JIRA_PASS"],
             token: process.env["JIRA_TOKEN"],
         });
-        if (typeof authorization !== "string") {
-            setStoredUser(authorization.user);
-        }
+        setStoredUser(authorization.user);
 
         const dateToBook = await getDateToBook();
 

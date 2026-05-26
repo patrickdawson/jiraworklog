@@ -27,8 +27,9 @@ Artifacts appear under `release/`.
 
 Environment variables (same as the CLI):
 
-* `JIRA_TOKEN` — optional; if set, the app can skip password login.
-* `JIRA_PASS` — optional default password for non-token auth.
+* `JIRA_TOKEN` — optional Atlassian API token ([create one](https://id.atlassian.com/manage-profile/security/api-tokens)).
+* `JIRA_USER` — Atlassian account email; required with `JIRA_TOKEN` when no stored user exists.
+* `JIRA_PASS` — optional API token used with interactive email login (same value as `JIRA_TOKEN`).
 * `TOGGL_API_TOKEN` — required for Toggl import.
 
 The command-line tool is unchanged: use `npm run dev` or `npm start` for the Inquirer-based CLI.
@@ -38,8 +39,9 @@ The Windows / installer icon comes from [`build/icon.png`](build/icon.png) (also
 
 # Jira Setup
 
-You can setup either `JIRA_TOKEN` or insert username and password on each start. This is the preferred method.
-As an alternative you could save your password in `JIRA_PASS` and omit the entry of the password each time.
+Jira Cloud uses **Basic authentication** with your **Atlassian account email** and an **API token** (not your account password).
+
+Set `JIRA_USER` and `JIRA_TOKEN`, or enter email + API token when prompted. You can store the token in `JIRA_PASS` and only enter your email on each start.
 
 
 # Setup for auto import with toggl
