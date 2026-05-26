@@ -51,7 +51,7 @@ async function resolveTokenAuthorization(defaults: AuthDefaults): Promise<Author
     const credentials: Authorization = { user: email, password: token };
     if (!(await checkCredentials(credentials))) {
         console.log("Der angegebene API-Token oder die E-Mail ist falsch. Bitte erneut versuchen.");
-        return await getAuthorization({ ...defaults, user: email });
+        return await getAuthorization({ user: email, skipEnvCredentials: true });
     }
     return credentials;
 }
@@ -68,18 +68,18 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
         message: "Für welchen Benutzer möchtest du buchen (Atlassian E-Mail)",
         default: defaults.user,
     });
-    const pwd =
-        defaults.password ??
-        process.env["JIRA_TOKEN"]?.trim() ??
-        (await password({
-            message: `API-Token für ${user || defaults.user}`,
-        }));
+    const pwd = defaults.skipEnvCredentials
+        ? await password({ message: `API-Token für ${user}` })
+        : (defaults.password ??
+          process.env["JIRA_TOKEN"]?.trim() ??
+          (await password({
+              message: `API-Token für ${user || defaults.user}`,
+          })));
     const credentials: Authorization = { user, password: pwd };
 
-    // re-try if credentials are wrong
     if (!(await checkCredentials(credentials))) {
         console.log("Der angegebene Benutzername / Passwort ist falsch. Bitte erneut versuchen.");
-        return await getAuthorization(defaults);
+        return await getAuthorization({ user, skipEnvCredentials: true });
     }
 
     return credentials;

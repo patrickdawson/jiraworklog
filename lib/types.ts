@@ -34,6 +34,8 @@ export interface AuthDefaults {
     user?: string;
     password?: string;
     token?: string;
+    /** After a failed check, do not reuse env/defaults credentials on retry. */
+    skipEnvCredentials?: boolean;
 }
 
 export interface ConfSchema {
