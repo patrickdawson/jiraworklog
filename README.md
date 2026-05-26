@@ -28,8 +28,7 @@ Artifacts appear under `release/`.
 Environment variables (same as the CLI):
 
 * `JIRA_TOKEN` — optional Atlassian API token ([create one](https://id.atlassian.com/manage-profile/security/api-tokens)).
-* `JIRA_USER` — Atlassian account email; required with `JIRA_TOKEN` when no stored user exists.
-* `JIRA_PASS` — optional API token used with interactive email login (same value as `JIRA_TOKEN`).
+* `JIRA_USER` — Atlassian account email; required with `JIRA_TOKEN` for non-interactive login.
 * `TOGGL_API_TOKEN` — required for Toggl import.
 
 The command-line tool is unchanged: use `npm run dev` or `npm start` for the Inquirer-based CLI.
@@ -41,7 +40,7 @@ The Windows / installer icon comes from [`build/icon.png`](build/icon.png) (also
 
 Jira Cloud uses **Basic authentication** with your **Atlassian account email** and an **API token** (not your account password).
 
-Set `JIRA_USER` and `JIRA_TOKEN`, or enter email + API token when prompted. You can store the token in `JIRA_PASS` and only enter your email on each start.
+Set `JIRA_USER` and `JIRA_TOKEN` in `.env` or `.env.local`, or enter email + API token when prompted.
 
 
 # Setup for auto import with toggl

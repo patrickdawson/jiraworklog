@@ -70,6 +70,7 @@ const getAuthorization = async (defaults: AuthDefaults = {}): Promise<Authorizat
     });
     const pwd =
         defaults.password ??
+        process.env["JIRA_TOKEN"]?.trim() ??
         (await password({
             message: `API-Token für ${user || defaults.user}`,
         }));
@@ -93,9 +94,7 @@ async function resolveAuthorization(
     if (defaults.token) {
         const email = resolveAccountEmail(defaults);
         if (!email) {
-            throw new Error(
-                "Mit JIRA_TOKEN ist die Atlassian-E-Mail erforderlich (Benutzerfeld oder JIRA_USER).",
-            );
+            throw new Error("Mit JIRA_TOKEN ist JIRA_USER erforderlich.");
         }
         const credentials: Authorization = { user: email, password: defaults.token.trim() };
         if (!(await checkCredentials(credentials, { silent: true }))) {
@@ -104,9 +103,9 @@ async function resolveAuthorization(
         return credentials;
     }
     const user = defaults.user;
-    const pwd = defaults.password ?? process.env["JIRA_PASS"];
+    const pwd = defaults.password ?? process.env["JIRA_TOKEN"]?.trim();
     if (!user || !pwd) {
-        throw new Error("Jira email and API token are required when JIRA_TOKEN is not set.");
+        throw new Error("JIRA_USER und JIRA_TOKEN sind erforderlich.");
     }
     const credentials: Authorization = { user, password: pwd };
     if (!(await checkCredentials(credentials, { silent: true }))) {

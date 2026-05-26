@@ -37,7 +37,6 @@ export interface AuthDefaults {
 }
 
 export interface ConfSchema {
-    user?: string;
     lastIssues?: string[];
 }
 

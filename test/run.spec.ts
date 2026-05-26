@@ -8,7 +8,6 @@ import "dayjs/locale/de.js";
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 import * as inquirerPrompts from "@inquirer/prompts";
-import Conf from "conf";
 import * as testModule from "../lib/run.js";
 import * as auth from "../lib/auth.js";
 import * as toggl from "../lib/toggl.js";
@@ -98,17 +97,6 @@ describe("run test", () => {
             expect(consoleLogMock).toHaveBeenCalledWith(
                 expect.stringMatching(/.*Willkommen beim JIRA Worklog Tool\..*/),
             );
-        });
-    });
-
-    describe("auth", () => {
-        it("sets returned user of getCredentials into configstore", async () => {
-            vi.mocked(auth.getAuthorization).mockResolvedValue({
-                user: "newUser",
-                password: "secret",
-            });
-            await testModule.run();
-            expect(vi.mocked(Conf).mock.instances[0].set).toHaveBeenCalledWith("user", "newUser");
         });
     });
 

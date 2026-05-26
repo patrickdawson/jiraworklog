@@ -19,14 +19,7 @@ import {
     getSummaryDurationMin,
 } from "./toggl-import.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "./booking-dates.js";
-import {
-    filterIssueChoices,
-    getAllIssues,
-    getIssueKeyByName,
-    addToLastIssues,
-    getStoredUser,
-    setStoredUser,
-} from "./issues.js";
+import { filterIssueChoices, getAllIssues, getIssueKeyByName, addToLastIssues } from "./issues.js";
 import config from "../config.json" with { type: "json" };
 import type { Authorization, WorkLogEntry } from "./types.js";
 
@@ -179,11 +172,9 @@ const run = async (): Promise<void> => {
     try {
         console.log("\nWillkommen beim JIRA Worklog Tool.");
         const authorization = await getAuthorization({
-            user: getStoredUser(),
-            password: process.env["JIRA_PASS"],
+            user: process.env["JIRA_USER"],
             token: process.env["JIRA_TOKEN"],
         });
-        setStoredUser(authorization.user);
 
         const dateToBook = await getDateToBook();
 

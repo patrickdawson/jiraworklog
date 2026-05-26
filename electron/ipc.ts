@@ -10,12 +10,7 @@ import {
 } from "../lib/toggl-import.js";
 import { submitManualWorklog } from "../lib/manual-worklog.js";
 import { getBookingDateOptions, getDefaultBookingDateIndex } from "../lib/booking-dates.js";
-import {
-    filterIssueChoices,
-    getIssueKeyByName,
-    getStoredUser,
-    setStoredUser,
-} from "../lib/issues.js";
+import { filterIssueChoices, getIssueKeyByName } from "../lib/issues.js";
 import { getSessionAuth, setSessionAuth } from "./session.js";
 
 function extractPreviewErrorMessage(err: unknown): string {
@@ -39,7 +34,7 @@ function extractPreviewErrorMessage(err: unknown): string {
 
 function tryAuthFromEnv(): void {
     const token = process.env["JIRA_TOKEN"]?.trim();
-    const user = process.env["JIRA_USER"]?.trim() || getStoredUser();
+    const user = process.env["JIRA_USER"]?.trim();
     if (token && user && !getSessionAuth()) {
         setSessionAuth({ user, password: token });
     }
@@ -61,9 +56,6 @@ export function registerIpcHandlers(): void {
                     password: payload.password,
                 });
                 setSessionAuth(auth);
-                if (typeof auth !== "string") {
-                    setStoredUser(auth.user);
-                }
                 return { ok: true, user: auth.user };
             } catch (e) {
                 return { ok: false, error: (e as Error).message };
@@ -77,7 +69,7 @@ export function registerIpcHandlers(): void {
 
     ipcMain.handle("auth:getSession", () => ({
         hasAuth: getSessionAuth() !== null,
-        user: getStoredUser(),
+        user: getSessionAuth()?.user,
     }));
 
     ipcMain.handle("auth:tryEnv", () => {

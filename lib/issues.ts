@@ -64,11 +64,3 @@ export function addToLastIssues(issue: string): void {
         lastIssues.filter((v) => !!v),
     );
 }
-
-export function setStoredUser(user: string): void {
-    configstore.set("user", user);
-}
-
-export function getStoredUser(): string | undefined {
-    return configstore.get("user");
-}
