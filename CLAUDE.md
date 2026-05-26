@@ -13,3 +13,5 @@ Entry point: `app.js` → `lib/run.js:run()`
 ## Before Finishing Work
 
 Always run `npm run prettier:write` before finishing any task.
+
+npm audit --audit-level moderate to check for vulnerabilities
