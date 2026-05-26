@@ -102,7 +102,7 @@
     "jiraUrl": "https://zwickroell.atlassian.net",
     "togglUrl": "https://api.track.toggl.com/api/v9",
     "togglWorkspace": "Zwick",
-    "jiraProjectKeys": ["DS", "TXAT", "TXPIV", "TXR", "TXRS", "TX4B", "TX3B", "TXAM", "PQX"],
+    "jiraProjectKeys": ["DS", "TXAT", "TXPIV", "TXR", "TXRS", "TX4B", "TX3B", "TXAM", "PQX", "DEVOPS"],
     "addTxpiv450SummaryEntry": true,
     "togglImportSummaryIssueKey": "TXPIV-450"
 }
