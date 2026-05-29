@@ -115,6 +115,16 @@
       vertical-align: top;
     }
 
+    tfoot tr {
+      border-top: 2px solid #dfe1e6;
+      background: #f4f5f7;
+    }
+
+    tfoot td {
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+
     .col-id { color: #6b778c; width: 48px; }
     .col-issue { font-weight: 600; color: #0052cc; white-space: nowrap; }
     .col-time { white-space: nowrap; }
@@ -239,6 +249,63 @@
     }
 
     .btn-add:hover { background: #0747a6; }
+
+    .block-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .block-panel label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b778c;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .block-panel input[type="text"] {
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      width: 160px;
+      font-family: monospace;
+    }
+
+    .block-panel input[type="text"]:focus {
+      outline: none;
+      border-color: #0052cc;
+    }
+
+    .block-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #172b4d;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .block-toggle input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .block-active-hint {
+      font-size: 0.8rem;
+      color: #bf2600;
+      font-weight: 500;
+    }
+
+    .block-active-hint[hidden] {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -276,6 +343,23 @@
       </div>
     </div>
 
+    <div class="users-section">
+      <h2>Block Worklog</h2>
+      <div class="users-panel block-panel">
+        <label>
+          Issue Key
+          <input id="blockIssueKey" type="text" placeholder="e.g. TXR-1234" autocomplete="off" />
+        </label>
+        <label class="block-toggle">
+          <input id="blockEnabled" type="checkbox" />
+          Block worklogs for this issue (HTTP 400)
+        </label>
+        <span class="block-active-hint" id="blockActiveHint" hidden>
+          Blocking worklogs for <strong id="blockActiveKey"></strong>
+        </span>
+      </div>
+    </div>
+
     <div class="meta" id="meta">0 entries</div>
     <div class="table-wrapper">
       <table id="worklogTable">
@@ -300,6 +384,13 @@
             </td>
           </tr>
         </tbody>
+        <tfoot id="tableFooter" hidden>
+          <tr>
+            <td colspan="2">Total</td>
+            <td class="col-time" id="totalTime">0m</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </main>
@@ -316,8 +407,16 @@
     const newUsername = document.getElementById('newUsername');
     const newPassword = document.getElementById('newPassword');
     const newDisplayName = document.getElementById('newDisplayName');
+    const tableFooter = document.getElementById('tableFooter');
+    const totalTime = document.getElementById('totalTime');
+    const blockIssueKey = document.getElementById('blockIssueKey');
+    const blockEnabled = document.getElementById('blockEnabled');
+    const blockActiveHint = document.getElementById('blockActiveHint');
+    const blockActiveKey = document.getElementById('blockActiveKey');
 
     let count = 0;
+    let blockUpdateTimer = null;
+    let totalMinutes = 0;
 
     function renderUsers(users) {
       userList.innerHTML = '';
@@ -336,6 +435,33 @@
         userList.appendChild(chip);
       });
     }
+
+    function renderBlockWorklog(config) {
+      blockIssueKey.value = config.issueKey || '';
+      blockEnabled.checked = Boolean(config.enabled);
+      const active = config.enabled && config.issueKey;
+      blockActiveHint.hidden = !active;
+      if (active) {
+        blockActiveKey.textContent = config.issueKey;
+      }
+    }
+
+    function scheduleBlockWorklogUpdate() {
+      if (blockUpdateTimer) clearTimeout(blockUpdateTimer);
+      blockUpdateTimer = setTimeout(() => {
+        fetch('/api/block-worklog', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            enabled: blockEnabled.checked,
+            issueKey: blockIssueKey.value.trim(),
+          }),
+        });
+      }, 300);
+    }
+
+    blockIssueKey.addEventListener('input', scheduleBlockWorklogUpdate);
+    blockEnabled.addEventListener('change', scheduleBlockWorklogUpdate);
 
     addUserForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -370,6 +496,35 @@
         .replace(/"/g, '&quot;');
     }
 
+    const JIRA_TIME_UNITS = { w: 5 * 8 * 60, d: 8 * 60, h: 60, m: 1 };
+
+    function parseTimeSpentToMinutes(str) {
+      if (!str || !String(str).trim()) return 0;
+      let total = 0;
+      const re = /(\d+)\s*([wdhm])/gi;
+      let match;
+      while ((match = re.exec(String(str))) !== null) {
+        total += parseInt(match[1], 10) * (JIRA_TIME_UNITS[match[2].toLowerCase()] ?? 0);
+      }
+      return total;
+    }
+
+    function formatDurationHoursMinutes(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      if (hours <= 0) return `${remainingMinutes}m`;
+      return `${hours}h ${remainingMinutes}m`;
+    }
+
+    function updateTotalRow() {
+      if (count === 0) {
+        tableFooter.hidden = true;
+        return;
+      }
+      tableFooter.hidden = false;
+      totalTime.textContent = formatDurationHoursMinutes(totalMinutes);
+    }
+
     function appendRow(entry, animate) {
       emptyRow.style.display = 'none';
       const tr = document.createElement('tr');
@@ -385,7 +540,9 @@
       `;
       tbody.appendChild(tr);
       count++;
+      totalMinutes += parseTimeSpentToMinutes(entry.timeSpent);
       updateMeta();
+      updateTotalRow();
     }
 
     function clearTable() {
@@ -393,7 +550,9 @@
       tbody.appendChild(emptyRow);
       emptyRow.style.display = '';
       count = 0;
+      totalMinutes = 0;
       updateMeta();
+      updateTotalRow();
     }
 
     function updateMeta() {
@@ -414,6 +573,10 @@
 
     evtSource.addEventListener('users', (e) => {
       renderUsers(JSON.parse(e.data));
+    });
+
+    evtSource.addEventListener('blockWorklog', (e) => {
+      renderBlockWorklog(JSON.parse(e.data));
     });
 
     evtSource.addEventListener('worklog', (e) => {

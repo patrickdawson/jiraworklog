@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 
 // Resolve public/ whether running via ts-node (simulator/) or compiled (simulator/dist/)
 const publicDir = fs.existsSync(path.join(__dirname, "public"))
@@ -32,6 +32,28 @@ interface SimUser {
 
 let worklogs: WorklogEntry[] = [];
 let nextId = 1;
+
+interface BlockWorklogConfig {
+    enabled: boolean;
+    issueKey: string;
+}
+
+let blockWorklog: BlockWorklogConfig = { enabled: false, issueKey: "" };
+
+function getBlockWorklogConfig(): BlockWorklogConfig {
+    return { ...blockWorklog };
+}
+
+function normalizeIssueKey(key: string): string {
+    return key.trim().toUpperCase();
+}
+
+function isWorklogBlocked(issueKey: string): boolean {
+    if (!blockWorklog.enabled) return false;
+    const blocked = normalizeIssueKey(blockWorklog.issueKey);
+    if (!blocked) return false;
+    return normalizeIssueKey(issueKey) === blocked;
+}
 
 // User store — pre-seeded with a default test user
 const users = new Map<string, SimUser>([
@@ -160,7 +182,7 @@ app.post("/api/users", (req: Request, res: Response) => {
 
 // DELETE /api/users/:username — remove a test user
 app.delete("/api/users/:username", (req: Request, res: Response) => {
-    const { username } = req.params;
+    const username = String(req.params.username);
     if (!users.has(username)) {
         res.status(404).json({ message: "User not found" });
         return;
@@ -170,8 +192,36 @@ app.delete("/api/users/:username", (req: Request, res: Response) => {
     res.status(204).end();
 });
 
+// GET/PUT /api/block-worklog — simulate worklog rejection for a specific issue
+app.get("/api/block-worklog", (_req: Request, res: Response) => {
+    res.json(getBlockWorklogConfig());
+});
+
+app.put("/api/block-worklog", (req: Request, res: Response) => {
+    const { enabled, issueKey } = req.body as {
+        enabled?: boolean;
+        issueKey?: string;
+    };
+    blockWorklog = {
+        enabled: Boolean(enabled),
+        issueKey: typeof issueKey === "string" ? issueKey.trim() : "",
+    };
+    broadcast("blockWorklog", getBlockWorklogConfig());
+    res.json(getBlockWorklogConfig());
+});
+
 function postWorklog(req: Request<{ issueKey: string }>, res: Response): void {
     const { issueKey } = req.params;
+
+    if (isWorklogBlocked(issueKey)) {
+        console.log(`[!] Worklog blockiert: ${issueKey}`);
+        res.status(400).json({
+            errorMessages: [`Worklog for issue ${issueKey} is blocked by the simulator.`],
+            errors: {},
+        });
+        return;
+    }
+
     const { timeSpent, started, comment } = req.body as {
         timeSpent?: string;
         started?: string;
@@ -210,6 +260,7 @@ app.get("/events", (req: Request, res: Response) => {
     // Send current state on connect
     res.write(`event: init\ndata: ${JSON.stringify(worklogs)}\n\n`);
     res.write(`event: users\ndata: ${JSON.stringify(getUserList())}\n\n`);
+    res.write(`event: blockWorklog\ndata: ${JSON.stringify(getBlockWorklogConfig())}\n\n`);
 
     sseClients.add(res);
     console.log(`\x1b[36m SSE\x1b[0m Client verbunden (${sseClients.size} insgesamt)`);
