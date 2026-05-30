@@ -65,7 +65,12 @@ export async function postTogglImportToJira(
     preview: TogglImportPreview,
 ): Promise<{ errors: string[] }> {
     const errors: string[] = [];
-    const summaryDurationSum = getSummaryDurationMin(preview.valid);
+    // The Sammelbuchung mirrors the sum of the concrete worklogs, but it must
+    // only count time that actually made it into Jira. Accumulating after each
+    // successful post (instead of summing up front) prevents a failed concrete
+    // booking (e.g. missing permissions) from inflating the summary and being
+    // double-counted on the summary issue once the booking is retried.
+    let bookedSummaryMin = 0;
 
     for (const entry of preview.valid) {
         try {
@@ -78,17 +83,20 @@ export async function postTogglImportToJira(
                 dateToBook,
                 authorization,
             );
+            if (entry.issueKey !== config.togglImportSummaryIssueKey) {
+                bookedSummaryMin += entry.durationMin;
+            }
         } catch (e) {
             errors.push(`${entry.issueKey}: ${(e as Error).message}`);
         }
     }
 
-    if (config.addTxpiv450SummaryEntry && summaryDurationSum > 0) {
+    if (config.addTxpiv450SummaryEntry && bookedSummaryMin > 0) {
         try {
             await postWorklogToJira(
                 {
                     issueKey: config.togglImportSummaryIssueKey,
-                    timeSpent: `${summaryDurationSum}m`,
+                    timeSpent: `${bookedSummaryMin}m`,
                     message: undefined,
                 },
                 dateToBook,

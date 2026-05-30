@@ -231,6 +231,36 @@ describe("run test", () => {
                 expect(summaryAggregateScope.pendingMocks()).toHaveLength(0);
             });
 
+            it("books the summary only for concrete worklogs that actually succeeded", async () => {
+                config.addTxpiv450SummaryEntry = true;
+                vi.mocked(toggl.convertToWorkLogEntries).mockReturnValue([
+                    { issueKey: "TXR-1234", durationMin: 10, description: "Fails to book" },
+                    { issueKey: "TXR-5678", durationMin: 20, description: "Books fine" },
+                ]);
+
+                nock.cleanAll();
+                const failingScope = nock("http://jira")
+                    .post("/rest/api/2/issue/TXR-1234/worklog")
+                    .reply(403, { errorMessages: ["You do not have permission"] });
+                const successScope = nock("http://jira")
+                    .post("/rest/api/2/issue/TXR-5678/worklog")
+                    .reply(201, { id: "10021" });
+                // The summary must mirror only the booked time (20m), not the full 30m.
+                const summaryAggregateScope = nock("http://jira")
+                    .post(
+                        `/rest/api/2/issue/${config.togglImportSummaryIssueKey}/worklog`,
+                        (body) => body.timeSpent === "20m" && body.comment === undefined,
+                    )
+                    .reply(201, { id: "10022" });
+
+                await testModule.run();
+
+                expect(failingScope.pendingMocks()).toHaveLength(0);
+                expect(successScope.pendingMocks()).toHaveLength(0);
+                expect(summaryAggregateScope.pendingMocks()).toHaveLength(0);
+                expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringMatching(/TXR-1234/));
+            });
+
             it("prints summary of worklog entries", async () => {
                 await testModule.run();
 
