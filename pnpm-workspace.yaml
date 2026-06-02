@@ -1,0 +1,5 @@
+packages:
+    - .
+    - simulator
+
+minimumReleaseAge: 4320

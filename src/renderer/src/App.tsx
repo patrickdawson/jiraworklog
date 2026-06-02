@@ -150,7 +150,7 @@ export function App(): JSX.Element {
         return (
             <div className="loading-screen" role="alert">
                 <span>
-                    Fehler: Electron-Preload nicht geladen. Starte die App mit npm run dev:app.
+                    Fehler: Electron-Preload nicht geladen. Starte die App mit pnpm run dev:app.
                 </span>
             </div>
         );
@@ -444,7 +444,7 @@ export function App(): JSX.Element {
                 </>
             )}
 
-            <footer className="app-footer">CLI: npm run dev · Desktop: npm run dev:app</footer>
+            <footer className="app-footer">CLI: pnpm run dev · Desktop: pnpm run dev:app</footer>
         </>
     );
 }

@@ -10,7 +10,7 @@
         "start": "tsc && node dist/app.js",
         "build": "tsc",
         "build:electron": "electron-vite build",
-        "dist": "npm run build:electron && electron-builder",
+        "dist": "pnpm run build:electron && electron-builder",
         "preview:app": "electron-vite preview",
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
@@ -23,6 +23,7 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
+    "packageManager": "pnpm@10.33.0",
     "dependencies": {
         "@inquirer/prompts": "8.3.2",
         "axios": "1.16.0",
@@ -78,5 +79,12 @@
                 "nsis"
             ]
         }
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "electron",
+            "electron-winstaller",
+            "esbuild"
+        ]
     }
 }

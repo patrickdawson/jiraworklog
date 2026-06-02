@@ -14,13 +14,13 @@ Command line tool to add worklogs quickly
 Run the UI locally (loads `.env` / `.env.local` like the CLI):
 
 ```bash
-npm run dev:app
+pnpm run dev:app
 ```
 
 Production build output is written to `out/`. To produce a Windows installer with [electron-builder](https://www.electron.build/):
 
 ```bash
-npm run dist
+pnpm run dist
 ```
 
 Artifacts appear under `release/`.
@@ -31,7 +31,7 @@ Environment variables (same as the CLI):
 * `JIRA_USER` — Atlassian account email; required with `JIRA_TOKEN` for non-interactive login.
 * `TOGGL_API_TOKEN` — required for Toggl import.
 
-The command-line tool is unchanged: use `npm run dev` or `npm start` for the Inquirer-based CLI.
+The command-line tool is unchanged: use `pnpm run dev` or `pnpm start` for the Inquirer-based CLI.
 
 The Windows / installer icon comes from [`build/icon.png`](build/icon.png) (also copied to [`src/renderer/public/app-icon.png`](src/renderer/public/app-icon.png) for the in-app header).
 

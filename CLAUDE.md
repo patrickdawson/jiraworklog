@@ -12,4 +12,4 @@ Entry point: `app.js` → `lib/run.js:run()`
 
 ## Before Finishing Work
 
-Always run `npm run prettier:write` before finishing any task.
+Always run `pnpm run prettier:write` before finishing any task.

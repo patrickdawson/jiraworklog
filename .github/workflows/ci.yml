@@ -13,15 +13,17 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
+            - uses: pnpm/action-setup@v4
+
             - uses: actions/setup-node@v6
               with:
                   node-version: lts/*
-                  cache: npm
+                  cache: pnpm
 
-            - run: npm ci
+            - run: pnpm install --frozen-lockfile
 
-            - run: npm run lint
+            - run: pnpm run lint
 
-            - run: npm run prettier
+            - run: pnpm run prettier
 
-            - run: npm test
+            - run: pnpm test
