@@ -114,6 +114,6 @@
         "PQX",
         "DEVOPS"
     ],
-    "addTxpiv450SummaryEntry": true,
+    "addTxpiv450SummaryEntry": false,
     "togglImportSummaryIssueKey": "TXPIV-450"
 }
