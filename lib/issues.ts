@@ -4,7 +4,7 @@ import fuzzy from "fuzzy";
 import config from "../config.json" with { type: "json" };
 import type { ConfSchema } from "./types.js";
 
-const configstore = new Conf<ConfSchema>();
+const configstore = new Conf<ConfSchema>({ projectName: "jirabooking" });
 
 export const expandIssue = (value: string): string =>
     /^[0-9].*/.test(value) ? `TXR-${value}` : value;
