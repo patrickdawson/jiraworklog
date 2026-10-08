@@ -112,7 +112,8 @@
         "TX3B",
         "TXAM",
         "PQX",
-        "DEVOPS"
+        "DEVOPS",
+        "SUP"
     ],
     "addTxpiv450SummaryEntry": false,
     "togglImportSummaryIssueKey": "TXPIV-450"
