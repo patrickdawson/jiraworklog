@@ -11,3 +11,10 @@ allowBuilds:
   electron: true
   electron-winstaller: true
   esbuild: true
+
+auditConfig:
+  ignoreGhsas:
+    # sprintf-js DoS via electron-builder > @electron/get > global-agent > roarr.
+    # No patched release (>=1.1.4) existed when added. The audit workflow fails
+    # once one is installable; then drop this entry and refresh the lockfile.
+    - GHSA-hp3w-g68c-fv3c

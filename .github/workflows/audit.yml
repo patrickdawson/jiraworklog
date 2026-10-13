@@ -22,4 +22,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level moderate
-
+      - name: Check ignored advisories are still unfixable
+        run: node .github/scripts/check-ignored-advisories.mjs
