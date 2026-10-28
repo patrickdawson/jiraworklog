@@ -8,14 +8,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
     main: {
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: resolve(__dirname, "electron/main.ts"),
             },
         },
     },
     preload: {
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: resolve(__dirname, "electron/preload.ts"),
                 output: {
                     format: "cjs",

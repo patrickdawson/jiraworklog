@@ -6,12 +6,12 @@
     "main": "out/main/main.js",
     "scripts": {
         "dev": "node --import tsx/esm --no-warnings app.ts",
-        "dev:app": "electron-vite dev",
+        "dev:app": "install-electron && electron-vite dev",
         "start": "tsc && node dist/app.js",
         "build": "tsc",
         "build:electron": "electron-vite build",
         "dist": "pnpm run build:electron && electron-builder",
-        "preview:app": "electron-vite preview",
+        "preview:app": "install-electron && electron-vite preview",
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "test:dev": "vitest",
@@ -43,9 +43,9 @@
         "@types/react": "19.2.17",
         "@types/react-dom": "19.2.3",
         "@vitejs/plugin-react": "6.1.2",
-        "electron": "41.10.7",
+        "electron": "44.9.3",
         "electron-builder": "26.17.0",
-        "electron-vite": "5.0.0",
+        "electron-vite": "6.0.0",
         "eslint": "10.12.0",
         "eslint-config-prettier": "10.1.8",
         "globals": "17.6.0",
@@ -55,7 +55,7 @@
         "typescript": "6.0.3",
         "typescript-eslint": "8.61.1",
         "vite": "8.3.3",
-        "vitest": "4.1.11"
+        "vitest": "4.1.12"
     },
     "build": {
         "appId": "com.jiraworklog.app",
