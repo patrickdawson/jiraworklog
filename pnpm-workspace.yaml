@@ -18,3 +18,7 @@ auditConfig:
     # No patched release (>=1.1.4) existed when added. The audit workflow fails
     # once one is installable; then drop this entry and refresh the lockfile.
     - GHSA-hp3w-g68c-fv3c
+    # minimatch DoS via globparts amplification. Only fixed in 11.0.1; the
+    # 3.x/5.x/9.x/10.x lines pulled by eslint, electron-builder and others have
+    # no backport. Build/dev tooling only. Drop once parents move to >=11.0.1.
+    - GHSA-g3hv-75wg-m249
